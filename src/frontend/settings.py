@@ -49,11 +49,15 @@ class Settings:
     def warm_clicked(self):
         self.w_clicked = not self.w_clicked
         self.co_clicked = not self.w_clicked
+        ctk.set_appearance_mode("light")
         self.toggle_button(self.warm_btn, self.w_clicked)
         self.toggle_button(self.cool_btn, self.co_clicked)
+        
 
     def cool_clicked(self):
         self.co_clicked = not self.co_clicked
         self.w_clicked = not self.co_clicked
+        ctk.set_appearance_mode("dark")
         self.toggle_button(self.cool_btn, self.co_clicked)
         self.toggle_button(self.warm_btn, self.w_clicked)
+        

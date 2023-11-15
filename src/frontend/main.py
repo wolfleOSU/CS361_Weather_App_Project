@@ -190,7 +190,7 @@ def select_forecast(forecast_type):
 #Function for when settings box is clicked
 def settings(root):
     settingsframe = tkinter.Frame(root)
-    settingsframe.grid(row=0, column=0)
+    settingsframe.grid(row=2, column=5, padx=10, pady=5)
     settings_box = Settings(settingsframe)
     
 
