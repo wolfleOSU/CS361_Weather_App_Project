@@ -1,5 +1,6 @@
 import tkinter
 import customtkinter
+from settings import Settings
 from customtkinter import CTkImage
 from PIL import Image, ImageTk
 
@@ -31,7 +32,7 @@ gear_image = Image.open("assets\gear.png")
 gear_image = gear_image.resize((30,30), Image.Resampling.LANCZOS)
 gear_icon = CTkImage(gear_image)
 
-settings_button = customtkinter.CTkButton(app, image=gear_icon, width=30, height=30, command=lambda: print("settings"), text="")
+settings_button = customtkinter.CTkButton(app, image=gear_icon, width=30, height=30, command=lambda: settings(app), text="")
 settings_button.grid(row=1, column=5, padx=10, pady=5, sticky="e")
 
 # Weather Information Label and arrows
@@ -185,6 +186,14 @@ def select_forecast(forecast_type):
         daily_button.configure(fg_color="#4da6ff")   # Highlighted color for the selected button
         hourly_button.configure(fg_color="#F0F0F0")  # Default color for the unselected button
         load_daily_data()   # Load and display daily data
+
+#Function for when settings box is clicked
+def settings(root):
+    settingsframe = tkinter.Frame(root)
+    settingsframe.grid(row=0, column=0)
+    settings_box = Settings(settingsframe)
+    
+
 
 # Initially select 'Hourly' forecast
 select_forecast("hourly")

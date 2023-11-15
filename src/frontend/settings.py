@@ -4,26 +4,22 @@ from customtkinter import CTkImage
 from PIL import Image, ImageTk
 
 class Settings:
-    def __init__(self):
+    def __init__(self, frame):
         self.c_clicked = False
         self.f_clicked = True
         self.w_clicked = False
         self.co_clicked = True
 
-        app = ctk.CTk()
-        app.geometry("720x480")
-        app.title("The Weather App")
-
-        self.celsius_btn = ctk.CTkButton(app, text="Celsius", command=self.celsius_clicked, corner_radius=10)
+        self.celsius_btn = ctk.CTkButton(frame, text="Celsius", command=self.celsius_clicked, corner_radius=10)
         self.celsius_btn.grid(row=0,column=0, padx=5, pady=5)
 
-        self.fahrenheit_btn = ctk.CTkButton(app, text="Fahrenheit", command=self.fahrenheit_clicked, corner_radius=10)
+        self.fahrenheit_btn = ctk.CTkButton(frame, text="Fahrenheit", command=self.fahrenheit_clicked, corner_radius=10)
         self.fahrenheit_btn.grid(row=0,column=0, padx=5, pady=5)
 
-        self.warm_btn = ctk.CTkButton(app, text="Warm", command=self.warm_clicked, corner_radius=10)
+        self.warm_btn = ctk.CTkButton(frame, text="Warm", command=self.warm_clicked, corner_radius=10)
         self.warm_btn.grid(row=1,column=0, padx=5, pady=5)
 
-        self.cool_btn = ctk.CTkButton(app, text="Cool", command=self.cool_clicked, corner_radius=10)
+        self.cool_btn = ctk.CTkButton(frame, text="Cool", command=self.cool_clicked, corner_radius=10)
         self.cool_btn.grid(row=1,column=0, padx=5, pady=5)
 
         self.toggle_button(self.celsius_btn, self.c_clicked)
@@ -31,7 +27,6 @@ class Settings:
         self.toggle_button(self.warm_btn, self.w_clicked)
         self.toggle_button(self.cool_btn, self.co_clicked)
 
-        app.mainloop()
 
     def toggle_button(self, button, is_clicked):
         if not is_clicked:
@@ -62,5 +57,3 @@ class Settings:
         self.w_clicked = not self.co_clicked
         self.toggle_button(self.cool_btn, self.co_clicked)
         self.toggle_button(self.warm_btn, self.w_clicked)
-
-test = Settings()
