@@ -17,11 +17,13 @@ class WeatherDataFetcher:
         try:
             response = requests.get(url)
             response.raise_for_status()
-            data = response.json()
-            self.print_current_weather(data)
+            return response.json()
+
         except requests.exceptions.RequestException as e:
             print(f"Error fetching current weather: {e}")
+            return None
 
+    """
     def print_current_weather(self, data):
         location = data['location']
         current = data['current']
@@ -31,17 +33,20 @@ class WeatherDataFetcher:
         print(f"Temperature: {current['temp_c']}°C")
         print(f"Feels Like: {current['feelslike_c']}°C")
         print(f"Wind Speed: {current['wind_kph']} km/h")
+    """
 
     def fetch_weather_forecast(self):
         url = f'http://api.openweathermap.org/data/2.5/forecast?q={self.city}&cnt=7&appid={self.openweather_api_key}'
         try:
             response = requests.get(url)
             response.raise_for_status()
-            data = response.json()
-            self.print_weather_forecast(data)
+            return response.json()
+            
         except requests.exceptions.RequestException as e:
             print(f"Error fetching weather forecast: {e}")
+            return None
 
+    """
     def print_weather_forecast(self, data):
         print()
         print("Location:", self.city)
@@ -52,6 +57,7 @@ class WeatherDataFetcher:
             max_temp = forecast['main']['temp_max'] - 273.15
             min_temp = forecast['main']['temp_min'] - 273.15
             print("{:<19} {:<25} {:<15.2f} {:<15.2f}".format(date, condition, max_temp, min_temp))
+    """
 
     def geocode_city(self):
         base_url = "https://nominatim.openstreetmap.org/search"

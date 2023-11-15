@@ -1,7 +1,5 @@
 *.gitkeep
 
-*__init__.py
-
 *__pycache__
 
 **/savedLocations.*
