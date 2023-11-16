@@ -1,5 +1,6 @@
 import tkinter
 import customtkinter
+from settings import Settings
 from customtkinter import CTkImage
 from PIL import Image, ImageTk
 
@@ -43,7 +44,10 @@ class Navigation:
         self.right_button.grid(row=2, column=4, padx=10, pady=10)
 
     def on_settings_click(self):
-        print("Settings clicked")
+        self.settingsframe = tkinter.Frame(self.app)
+        self.settingsframe.grid(row=2, column=5, padx=10, pady=5)
+        self.settings_box = Settings(self.settingsframe)
+        
 
     def on_left_click(self):
         print("Left arrow clicked")
