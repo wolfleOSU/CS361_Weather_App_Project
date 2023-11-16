@@ -35,15 +35,26 @@ class WeatherDataFetcher:
         print(f"Wind Speed: {current['wind_kph']} km/h")
     """
 
-    def fetch_weather_forecast(self):
-        url = f'http://api.openweathermap.org/data/2.5/forecast?q={self.city}&cnt=7&appid={self.openweather_api_key}'
+    def fetch_hourly_forecast(self):
+        # This might be similar to your existing fetch_weather_forecast method
+        url = f'http://api.openweathermap.org/data/2.5/forecast?q={self.city}&appid={self.openweather_api_key}'
         try:
             response = requests.get(url)
             response.raise_for_status()
             return response.json()
-            
         except requests.exceptions.RequestException as e:
-            print(f"Error fetching weather forecast: {e}")
+            print(f"Error fetching hourly weather forecast: {e}")
+            return None
+
+    def fetch_daily_forecast(self):
+        # Modify the URL for the daily forecast endpoint
+        url = f'http://api.openweathermap.org/data/2.5/forecast/daily?q={self.city}&cnt=7&appid={self.openweather_api_key}'
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching daily weather forecast: {e}")
             return None
 
     """
@@ -78,6 +89,7 @@ class WeatherDataFetcher:
             print(f"Error in geocoding: {e}")
             return None, None
 
+
     def fetch_nws_weather_data(self):
         latitude, longitude = self.geocode_city()
         if latitude and longitude:
@@ -86,10 +98,26 @@ class WeatherDataFetcher:
                 response = requests.get(url)
                 response.raise_for_status()
                 data = response.json()
-                self.print_nws_weather_data(data)
+                return self.parse_nws_weather_data(data)
             except requests.exceptions.RequestException as e:
                 print(f"Error fetching NWS weather data: {e}")
+                return None
 
+    def parse_nws_weather_data(self, data):
+        location_name = data['properties']['relativeLocation']['properties']['city']
+        grid_data_url = data['properties']['forecast']
+        forecast_hourly_url = data['properties']['forecastHourly']
+
+        try:
+            forecast_response = requests.get(grid_data_url)
+            forecast_response.raise_for_status()
+            forecast_data = forecast_response.json()
+            return self.parse_detailed_forecast(forecast_data)
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching detailed forecast: {e}")
+            return None
+
+    """
     def print_nws_weather_data(self, data):
         location_name = data['properties']['relativeLocation']['properties']['city']
         print()
@@ -103,6 +131,7 @@ class WeatherDataFetcher:
             self.print_detailed_forecast(forecast_data)
         except requests.exceptions.RequestException as e:
             print(f"Error fetching detailed forecast: {e}")
+    
 
     def print_detailed_forecast(self, forecast_data):
         properties = forecast_data['properties']
@@ -116,10 +145,27 @@ class WeatherDataFetcher:
             humidity = f"{period['relativeHumidity']['value']}%"
             dew_point = f"{round(period['dewpoint']['value'], 2)}°F"
             print("{:<20} {:<15} {:<45} {:<20} {:<20} {:<15}".format(time, temperature, conditions, wind_speed, humidity, dew_point))
-
+    """
+    def parse_detailed_forecast(self, forecast_data):
+        properties = forecast_data['properties']
+        periods = properties['periods']
+        forecast_list = []
+        for period in periods:
+            forecast_detail = {
+                "time": period['name'],
+                "temperature": f"{period['temperature']}°F",
+                "conditions": period['shortForecast'],
+                "wind_speed": period['windSpeed'],
+                "humidity": f"{period['relativeHumidity']['value']}%",
+                "dew_point": f"{round(period['dewpoint']['value'], 2)}°F"
+            }
+            forecast_list.append(forecast_detail)
+        return forecast_list
+    
+    
 if __name__ == "__main__":
     city = sys.argv[1] if len(sys.argv) > 1 else "Corvallis"  
     weather_fetcher = WeatherDataFetcher(city)
-    weather_fetcher.fetch_current_weather()
+    #weather_fetcher.fetch_current_weather()
     weather_fetcher.fetch_weather_forecast()
-    weather_fetcher.fetch_nws_weather_data()
+    #weather_fetcher.fetch_nws_weather_data()
