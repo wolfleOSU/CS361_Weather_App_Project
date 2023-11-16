@@ -1,3 +1,4 @@
+import csv
 import tkinter
 import customtkinter
 from settings import Settings
@@ -60,6 +61,37 @@ class Search:
         self.app = app
         self.location = customtkinter.StringVar()
         self.create_search_entry()
+        self.file_path = "src/frontend/cities.csv"
+        self.city_data = self.load_city_data() # i cannot seem to pass from DataLoader to Search class. moved function here for now
+        self.cityPrint()
+
+        
+    def cityPrint(self):
+        print(self.city_data)
+    
+
+    def load_city_data(self):
+        try:
+            with open(self.file_path, newline='', encoding='utf-8') as csvfile:
+                reader = csv.DictReader(csvfile)
+                data_list = []
+                for row in reader:
+                    city_info = {
+                        'city': row['city'],
+                        'state_id': row['state_id'],
+                        'state_name': row['state_name'],
+                        'lat': float(row['lat']),
+                        'lng': float(row['lng'])
+                    }
+                    data_list.append(city_info)
+                print("Read data") # test to see if data is being read
+                self.data = data_list 
+                return data_list  # Return the loaded data
+        except FileNotFoundError:
+            print(f"Error: File '{self.file_path}' not found.")
+        except Exception as e:
+            print(f"Error loading data: {e}")
+
 
     def create_search_entry(self):
         self.search_entry = customtkinter.CTkEntry(
@@ -67,9 +99,36 @@ class Search:
             placeholder_text="Search for a Location", textvariable=self.location
         )
         self.search_entry.grid(row=1, column=2, columnspan=2, padx=10, pady=5, sticky="ew")
+        
+        # on key press <Return> calls function print_search_text 
+        self.search_entry.bind("<KeyRelease>", self.print_search_text)
+        # self.search_entry.bind("<KeyRelease>", self.check(self, self.city_data))
 
+    # def check(e, self, city_data):
+    #     # what was typed
+    #     typed = self.search_entry.get()
+
+    #     if type != "":
+    #         data = []
+    #         for item in city_data:
+    #             if typed.lower() in item.lower():
+    #                 data.append(item)
+
+    #     print(item)
+
+
+        
+    
+    
+    # returns the text in the search feild
+    def print_search_text(self, event):
+        search_text = self.location.get()
+        print(search_text)
+    
     def get_search_text(self):
+        # print(self.location.get())
         return self.location.get()
+        
 
 class WeatherDisplay:
     def __init__(self, app):
@@ -113,11 +172,33 @@ class Forecast:
 
 class DataLoader:
     def __init__(self):
-        pass
+        self.file_path = "src/frontend/cities.csv"
+        self.data = None
+        # self.city_data = self.load_city_data()
 
-    def load_data(self):
-        # Implement data loading logic
-        pass
+
+    # def load_city_data(self):
+    #     try:
+    #         with open(self.file_path, newline='', encoding='utf-8') as csvfile:
+    #             reader = csv.DictReader(csvfile)
+    #             data_list = []
+    #             for row in reader:
+    #                 city_info = {
+    #                     'city': row['city'],
+    #                     'state_id': row['state_id'],
+    #                     'state_name': row['state_name'],
+    #                     'lat': float(row['lat']),
+    #                     'lng': float(row['lng'])
+    #                 }
+    #                 data_list.append(city_info)
+    #             print("Read data") # test to see if data is being read
+    #             self.data = data_list 
+    #             return data_list  # Return the loaded data
+    #     except FileNotFoundError:
+    #         print(f"Error: File '{self.file_path}' not found.")
+    #     except Exception as e:
+    #         print(f"Error loading data: {e}")
+
 
 
 class ScrollableArea:
@@ -156,10 +237,10 @@ class WeatherApp:
         self.title.grid(row=0, column=0, columnspan=6, padx=5, pady=5, sticky="ew")
         
         self.navigation = Navigation(self.app)
+        self.data_loader = DataLoader()
         self.search = Search(self.app)
         self.weather_display = WeatherDisplay(self.app)
         self.forecast = Forecast(self.app)
-        self.data_loader = DataLoader()
         self.scrollable_area = ScrollableArea(self.app)
 
     def setup_window(self):
