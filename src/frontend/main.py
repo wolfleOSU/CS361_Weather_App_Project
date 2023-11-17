@@ -8,7 +8,9 @@ from ..backend.weatherApp_API_Testing import WeatherDataFetcher
 
 
 
-
+"""
+Sets up some of the default settings
+"""
 class Settings:
     def __init__(self, app) -> None:
         self.app = app
@@ -19,6 +21,11 @@ class Settings:
     def set_appearance_mode(self, mode):
         customtkinter.set_appearance_mode(mode)
 
+
+"""
+Sets up 3 icons: the left and right buttons to select different saved locations as well
+as the gear icon that opens the settings menu.
+"""
 class Navigation:
     def __init__(self, app):
         self.app = app
@@ -55,6 +62,9 @@ class Navigation:
     def on_right_click(self):
         print("Right arrow clicked")
 
+"""
+Sets up the search bar.
+"""
 class Search:
     def __init__(self, app):
         self.app = app
@@ -75,7 +85,10 @@ class Search:
         city = self.get_search_text()
         self.app.update_city(city)
 
-
+"""
+This is the main box for the current weather to be displayed. There is the temp in F or C and a 
+statement about the current conditions.
+"""
 class WeatherDisplay:
     def __init__(self, app):
         self.app = app
@@ -94,6 +107,9 @@ class WeatherDisplay:
         self.temp_label.configure(text=f"{temperature}° F")
         self.weather_label.configure(text=condition)
 
+"""
+Sets up the buttons above the forecast box to switch between hourly and daily forecast.
+"""
 class Forecast:
     def __init__(self, app, data_loader, scrollable_area):
         self.app = app
@@ -125,6 +141,10 @@ class Forecast:
             self.hourly_button.configure(fg_color="#F0F0F0")  # Default color
             self.scrollable_area.update_area(self.data_loader.daily_forecast)
 
+
+"""
+Main frontend method to receive the API data from the backend and then put it into the correct area.
+"""
 class DataLoader:
     def __init__(self, weather_display, scrollable_area, city):
         self.weather_fetcher = WeatherDataFetcher(city)
@@ -143,11 +163,12 @@ class DataLoader:
         self.scrollable_area.update_area(self.hourly_forecast)
         
         self.daily_forecast = self.weather_fetcher.fetch_daily_forecast()
+        self.scrollable_area.update_area(self.daily_forecast)
 
-    def process_forecast_data(self, data):
-        # Process the raw API data to match the expected format
-        return data.get('list', [])
 
+"""
+Sets up the main box that holds the forecast info. Updates to take the API data and display it.
+"""
 class ScrollableArea:
     def __init__(self, app):
         self.app = app
@@ -179,8 +200,6 @@ class ScrollableArea:
 
         # Iterate through the forecast data and create widgets for each entry
         for forecast in forecast_data['list']:
-            # Extract data from each forecast entry
-            # Adjust these lines based on the actual structure of your forecast data
             #date_time = forecast.get('dt_txt', 'N/A')
             temp = forecast['main']['temp'] - 273.15 # Convert from Kelvin to Celsius
             condition = forecast['weather'][0]['description']
@@ -192,6 +211,9 @@ class ScrollableArea:
             label.pack(padx=10, pady=5, anchor='w')
 
 
+"""
+The main class, holds the other classes and holds the actually functionality to launch the window.
+"""
 class WeatherApp:
     def __init__(self):
         # Initialize the main window
