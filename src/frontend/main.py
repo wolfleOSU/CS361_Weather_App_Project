@@ -1,6 +1,6 @@
 import tkinter
 import customtkinter
-from settings import Settings
+from ..frontend.settings import Settings
 from customtkinter import CTkImage
 from PIL import Image, ImageTk
 
@@ -30,6 +30,7 @@ class Navigation:
     def __init__(self, app):
         self.app = app
         self.create_navigation_buttons()
+        self.settings_clicked = False
 
     def create_navigation_buttons(self):
         # Settings gear button
@@ -37,6 +38,12 @@ class Navigation:
         gear_icon = customtkinter.CTkImage(gear_image)
         self.settings_button = customtkinter.CTkButton(self.app, image=gear_icon, width=30, height=30, command=self.on_settings_click, text="")
         self.settings_button.grid(row=1, column=5, padx=10, pady=5, sticky="e")
+
+        # Create and hide settings panel
+        self.settingsframe = tkinter.Frame(self.app)
+        self.settingsframe.grid(row=2, column=5, padx=10, pady=5)
+        self.settings_box = Settings(self.settingsframe)
+        self.settingsframe.grid_remove()
 
         # Left arrow button
         left_image = Image.open("src/frontend/assets/left.png").resize((20, 20), Image.Resampling.LANCZOS)
@@ -51,9 +58,12 @@ class Navigation:
         self.right_button.grid(row=2, column=4, padx=10, pady=10)
 
     def on_settings_click(self):
-        self.settingsframe = tkinter.Frame(self.app)
-        self.settingsframe.grid(row=2, column=5, padx=10, pady=5)
-        self.settings_box = Settings(self.settingsframe)
+        if self.settings_clicked:
+            self.settingsframe.grid_remove()
+            self.settings_clicked = False
+        else:
+            self.settingsframe.grid()
+            self.settings_clicked = True
         
 
     def on_left_click(self):
