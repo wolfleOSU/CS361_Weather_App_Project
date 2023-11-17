@@ -1,10 +1,6 @@
 import tkinter
 import customtkinter
-<<<<<<< HEAD
 from ..frontend.settings import Settings
-=======
-#from settings import Settings
->>>>>>> 0984c36eae9dcd3afdbd696b22336fef261b5562
 from customtkinter import CTkImage
 from PIL import Image, ImageTk
 
@@ -39,7 +35,7 @@ class Navigation:
 
     def create_navigation_buttons(self):
         # Settings gear button
-        gear_image = Image.open("src/frontend/assets/gear.png").resize((30, 30), Image.Resampling.LANCZOS)
+        gear_image = Image.open("src/frontend/assets/gear.png").resize((30, 30), Image.BICUBIC)
         gear_icon = customtkinter.CTkImage(gear_image)
         self.settings_button = customtkinter.CTkButton(self.app, image=gear_icon, width=30, height=30, command=self.on_settings_click, text="")
         self.settings_button.grid(row=1, column=5, padx=10, pady=5, sticky="e")
@@ -51,13 +47,13 @@ class Navigation:
         self.settingsframe.grid_remove()
 
         # Left arrow button
-        left_image = Image.open("src/frontend/assets/left.png").resize((20, 20), Image.Resampling.LANCZOS)
+        left_image = Image.open("src/frontend/assets/left.png").resize((20, 20), Image.BICUBIC)
         left_icon = customtkinter.CTkImage(left_image)
         self.left_button = customtkinter.CTkButton(self.app, image=left_icon, width=20, height=20, command=self.on_left_click, text="")
         self.left_button.grid(row=2, column=1, padx=10, pady=10)
 
         # Right arrow button
-        right_image = Image.open("src/frontend/assets/right.png").resize((20, 20), Image.Resampling.LANCZOS)
+        right_image = Image.open("src/frontend/assets/right.png").resize((20, 20), Image.BICUBIC)
         right_icon = customtkinter.CTkImage(right_image)
         self.right_button = customtkinter.CTkButton(self.app, image=right_icon, width=20, height=20, command=self.on_right_click, text="")
         self.right_button.grid(row=2, column=4, padx=10, pady=10)
