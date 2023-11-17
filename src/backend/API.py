@@ -183,6 +183,14 @@ class initialize:
         hourly.fetch_weather_data()
         self.hourly = hourly.data
 
+    def hourly(self):
+        return self.hourly
+    
+    def daily(self):
+        return self.daily
+    
+    def current(self):
+        return self.current
     
         
         
