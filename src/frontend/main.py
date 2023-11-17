@@ -1,17 +1,22 @@
 import tkinter
 import customtkinter
+<<<<<<< HEAD
 from ..frontend.settings import Settings
+=======
+#from settings import Settings
+>>>>>>> 0984c36eae9dcd3afdbd696b22336fef261b5562
 from customtkinter import CTkImage
 from PIL import Image, ImageTk
 
-from ..backend.weatherApp_API_Testing import WeatherDataFetcher
+#from ..backend.weatherApp_API_Testing import WeatherDataFetcher
+from ..backend.API import initialize
 
 
 
 """
 Sets up some of the default settings
 """
-class Settings:
+class DefaultSettings:
     def __init__(self, app) -> None:
         self.app = app
 
@@ -106,11 +111,11 @@ class WeatherDisplay:
 
     def create_display_labels(self):
         # Temperature Label
-        self.temp_label = customtkinter.CTkLabel(self.app, text="60° F", font=("Roboto", 40))
+        self.temp_label = customtkinter.CTkLabel(self.app, text="", font=("Roboto", 40))
         self.temp_label.grid(row=3, column=2, padx=0, pady=10, sticky="nsew")
 
         # Weather Condition Label
-        self.weather_label = customtkinter.CTkLabel(self.app, text="Cloudy", font=("Roboto", 30))
+        self.weather_label = customtkinter.CTkLabel(self.app, text="", font=("Roboto", 30))
         self.weather_label.grid(row=3, column=3, padx=0, pady=10, sticky="nsew")
 
     def update_weather(self, temperature, condition):
@@ -145,11 +150,11 @@ class Forecast:
         if forecast_type == "hourly":
             self.hourly_button.configure(fg_color="#4da6ff")  # Highlighted color
             self.daily_button.configure(fg_color="#F0F0F0")   # Default color
-            self.scrollable_area.update_area(self.data_loader.hourly_forecast)
+            self.data_loader.update_hourly()
         elif forecast_type == "daily":
             self.daily_button.configure(fg_color="#4da6ff")   # Highlighted color
             self.hourly_button.configure(fg_color="#F0F0F0")  # Default color
-            self.scrollable_area.update_area(self.data_loader.daily_forecast)
+            self.data_loader.update_daily()
 
 
 """
@@ -157,25 +162,31 @@ Main frontend method to receive the API data from the backend and then put it in
 """
 class DataLoader:
     def __init__(self, weather_display, scrollable_area, city):
-        self.weather_fetcher = WeatherDataFetcher(city)
+        self.weather_fetcher = initialize(city)
         self.weather_display = weather_display
         self.scrollable_area = scrollable_area
         self.hourly_forecast = None
         self.daily_forecast = None
+        self.current = None
 
     def load_data(self):
-        current_weather = self.weather_fetcher.fetch_current_weather()
-        if current_weather:
-            self.weather_display.update_weather(current_weather['current']['temp_c'],
-                                                current_weather['current']['condition']['text'])
+        self.current = self.weather_fetcher.current
 
-        self.hourly_forecast = self.weather_fetcher.fetch_hourly_forecast()
-        self.scrollable_area.update_area(self.hourly_forecast)
+        self.hourly_forecast = self.weather_fetcher.hourly
         
-        self.daily_forecast = self.weather_fetcher.fetch_daily_forecast()
-        self.scrollable_area.update_area(self.daily_forecast)
+        self.daily_forecast = self.weather_fetcher.daily
+        
+    def update_current(self):
+        if self.current:
+            self.weather_display.update_weather(self.current['Temperature'], self.current['Condition'])  
 
+    def update_hourly(self):
+        if self.hourly_forecast:
+            self.scrollable_area.update_area(self.hourly_forecast, "hourly")
 
+    def update_daily(self):
+        if self.daily_forecast:
+            self.scrollable_area.update_area(self.daily_forecast, "daily")
 """
 Sets up the main box that holds the forecast info. Updates to take the API data and display it.
 """
@@ -202,23 +213,33 @@ class ScrollableArea:
         self.forecast_frame = customtkinter.CTkFrame(self.forecast_canvas)
         self.forecast_canvas.create_window((0, 0), window=self.forecast_frame, anchor="nw")
     
-    def update_area(self, forecast_data):
+    def update_area(self, forecast, type):
         #print("Forecast data structure:", type(forecast_data), forecast_data) # For testing
         # Clear existing forecast widgets
         for widget in self.forecast_frame.winfo_children():
             widget.destroy()
 
-        # Iterate through the forecast data and create widgets for each entry
-        for forecast in forecast_data['list']:
-            #date_time = forecast.get('dt_txt', 'N/A')
-            temp = forecast['main']['temp'] - 273.15 # Convert from Kelvin to Celsius
-            condition = forecast['weather'][0]['description']
-            chance_of_rain = forecast.get('pop', 0) * 100  # Convert to percentage
+        if type in ["hourly", "daily"]:
+            # Iterate over the indices of the forecast lists
+            for i in range(len(forecast['Time'])):
+                time = forecast['Time'][i]
+                temp = forecast['Temperature'][i]
+                condition = forecast['Conditions'][i]
+                wind_speed = forecast['Wind Speed'][i]
+                wind_dir = forecast['Wind Direction'][i]
+                humidity = forecast['Humidity'][i]
+                dew_point = forecast['Dew Point'][i]
 
-            # Create a label for each forecast entry and add it to the scrollable frame
-            label_text = f"Temp: {temp:.1f}°C, Condition: {condition}, Rain Chance: {chance_of_rain}%"
-            label = customtkinter.CTkLabel(self.forecast_frame, text=label_text)
-            label.pack(padx=10, pady=5, anchor='w')
+                # Format the forecast information
+                forecast_text = f"{time}: {temp}°F, {condition}, Wind: {wind_speed} mph {wind_dir}, Humidity: {humidity}, Dew Point: {dew_point}°F"
+                
+                # Create a label for each entry and add to the scrollable frame
+                label = customtkinter.CTkLabel(self.forecast_frame, text=forecast_text)
+                label.pack(padx=10, pady=5, anchor='w')
+
+        self.forecast_frame.update_idletasks()  # Make sure the frame is updated and scrollbar works.
+        self.forecast_canvas.configure(scrollregion=self.forecast_canvas.bbox("all"))
+
 
 
 """
@@ -228,7 +249,7 @@ class WeatherApp:
     def __init__(self):
         # Initialize the main window
         self.app = customtkinter.CTk()
-        self.settings = Settings(self.app)
+        self.settings = DefaultSettings(self.app)
         self.setup_window()
 
         self.configure_layout()
