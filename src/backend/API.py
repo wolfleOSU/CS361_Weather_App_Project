@@ -96,7 +96,7 @@ class weekly_Forcast:
                 periods = properties['periods']
                 
                 for period in periods:
-                    time = period['name']
+                    time = period.get('name', None)
                     temperature = int(f"{period.get('temperature', None)}")
                     conditions = period.get('shortForecast', None)
                     wind_speed_str = period.get('windSpeed', None)
