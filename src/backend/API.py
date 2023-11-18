@@ -96,9 +96,7 @@ class weekly_Forcast:
                 periods = properties['periods']
                 
                 for period in periods:
-                    time_string = period['startTime']
-                    time_convert = datetime.fromisoformat(time_string)
-                    time = time_convert.strftime("%m/%d/%y %H:%M")
+                    time = period['name']
                     temperature = int(f"{period.get('temperature', None)}")
                     conditions = period.get('shortForecast', None)
                     wind_speed_str = period.get('windSpeed', None)
