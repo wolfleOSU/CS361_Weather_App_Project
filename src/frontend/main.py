@@ -198,6 +198,10 @@ class ScrollableArea:
 
         self.forecast_frame = customtkinter.CTkFrame(self.forecast_canvas)
         self.forecast_canvas.create_window((0, 0), window=self.forecast_frame, anchor="nw")
+
+        self.forecast_canvas.pack(side=tkinter.LEFT, fill=tkinter.BOTH, expand=True)
+        self.scrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
+
     
     def update_area(self, forecast, type):
         #print("Forecast data structure:", type(forecast_data), forecast_data) # For testing
