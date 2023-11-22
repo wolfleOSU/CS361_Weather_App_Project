@@ -107,15 +107,18 @@ class WeatherDisplay:
 
     def create_display_labels(self):
         # Temperature Label
-        self.temp_label = customtkinter.CTkLabel(self.app, text="", font=("Roboto", 40))
+        self.temp_label = customtkinter.CTkLabel(self.app, text="Loading...", font=("Roboto", 40))
         self.temp_label.grid(row=3, column=2, padx=0, pady=10, sticky="nsew")
 
         # Weather Condition Label
-        self.weather_label = customtkinter.CTkLabel(self.app, text="", font=("Roboto", 30))
+        self.weather_label = customtkinter.CTkLabel(self.app, text="Loading...", font=("Roboto", 30))
         self.weather_label.grid(row=3, column=3, padx=0, pady=10, sticky="nsew")
 
-    def update_weather(self, temperature, condition):
-        self.temp_label.configure(text=f"{temperature}° F")
+    def update_weather(self, temperature, condition, unit="F"):
+        if unit == "F":
+            temperature = temperature * 1.8 + 32
+        print(f"Updating weather: {temperature}° {unit}, {condition}")
+        self.temp_label.configure(text=f"{temperature}° {unit}")
         self.weather_label.configure(text=condition)
 
 """
@@ -142,47 +145,50 @@ class Forecast:
         )
         self.daily_button.grid(row=5, column=3, padx=0, pady=10)
 
-    def select_forecast(self, forecast_type):
+    def select_forecast(self, forecast_type, unit="F"):
         if forecast_type == "hourly":
             self.hourly_button.configure(fg_color="#4da6ff")  # Highlighted color
             self.daily_button.configure(fg_color="#F0F0F0")   # Default color
-            self.data_loader.update_hourly()
+            self.data_loader.update_hourly(unit)
         elif forecast_type == "daily":
             self.daily_button.configure(fg_color="#4da6ff")   # Highlighted color
             self.hourly_button.configure(fg_color="#F0F0F0")  # Default color
-            self.data_loader.update_daily()
+            self.data_loader.update_daily(unit)
 
 
 """
 Main frontend method to receive the API data from the backend and then put it into the correct area.
 """
 class DataLoader:
-    def __init__(self, weather_display, scrollable_area, city):
+    def __init__(self, weather_display, scrollable_area, city, unit="F"):
         self.weather_fetcher = initialize(city)
         self.weather_display = weather_display
         self.scrollable_area = scrollable_area
         self.hourly_forecast = None
         self.daily_forecast = None
         self.current = None
+        self.unit = unit
 
     def load_data(self):
         self.current = self.weather_fetcher.current
+        print("Loading Current")
 
         self.hourly_forecast = self.weather_fetcher.hourly
         
         self.daily_forecast = self.weather_fetcher.daily
         
-    def update_current(self):
+    def update_current(self, unit="F"):
         if self.current:
-            self.weather_display.update_weather(self.current['Temperature'], self.current['Condition'])  
+            self.weather_display.update_weather(self.current['Temperature'], self.current['Condition'], unit)  
+            print("Updating current")
 
-    def update_hourly(self):
+    def update_hourly(self, unit="F"):
         if self.hourly_forecast:
-            self.scrollable_area.update_area(self.hourly_forecast, "hourly")
+            self.scrollable_area.update_area(self.hourly_forecast, "hourly", unit)
 
-    def update_daily(self):
+    def update_daily(self, unit="F"):
         if self.daily_forecast:
-            self.scrollable_area.update_area(self.daily_forecast, "daily")
+            self.scrollable_area.update_area(self.daily_forecast, "daily", unit)
 """
 Sets up the main box that holds the forecast info. Updates to take the API data and display it.
 """
@@ -213,7 +219,7 @@ class ScrollableArea:
         self.scrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
 
     
-    def update_area(self, forecast, type):
+    def update_area(self, forecast, type, unit="F"):
         #print("Forecast data structure:", type(forecast_data), forecast_data) # For testing
         # Clear existing forecast widgets
         for widget in self.forecast_frame.winfo_children():
@@ -224,6 +230,8 @@ class ScrollableArea:
             for i in range(len(forecast['Time'])):
                 time = forecast['Time'][i]
                 temp = forecast['Temperature'][i]
+                if unit == "C":
+                    temp = (temp - 32) * 5 / 9 
                 condition = forecast['Conditions'][i]
                 wind_speed = forecast['Wind Speed'][i]
                 wind_dir = forecast['Wind Direction'][i]
@@ -231,7 +239,7 @@ class ScrollableArea:
                 dew_point = forecast['Dew Point'][i]
 
                 # Format the forecast information
-                forecast_text = f"{time}: {temp}°F, {condition}, Wind: {wind_speed} mph {wind_dir}, Humidity: {humidity}, Dew Point: {dew_point}°F"
+                forecast_text = f"{time}: {temp}°{unit}, {condition}, Wind: {wind_speed} mph {wind_dir}, Humidity: {humidity}, Dew Point: {dew_point}° F"
                 
                 # Create a label for each entry and add to the scrollable frame
                 label = customtkinter.CTkLabel(self.forecast_frame, text=forecast_text)
@@ -267,6 +275,9 @@ class WeatherApp:
     def update_city(self, city):
         self.data_loader.city = city
         self.data_loader.load_data()
+        self.data_loader.update_current()
+        self.data_loader.update_hourly()
+
 
     def setup_window(self):
         self.app.title("The Weather App")
