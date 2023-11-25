@@ -58,6 +58,11 @@ class Navigation:
         self.right_button = customtkinter.CTkButton(self.app, image=right_icon, width=20, height=20, command=self.on_right_click, text="")
         self.right_button.grid(row=2, column=4, padx=10, pady=10)
 
+        # Location Display Box
+        self.location_box = customtkinter.CTkLabel(self.app, text="Corvallis", fg_color="#4da6ff", font=("Verdana", 35),
+                                                    corner_radius=7, text_color="black")
+        self.location_box.grid(row=2, column=2, columnspan = 2, padx=5, pady=(50, 15))
+
     def on_settings_click(self):
         if self.settings_clicked:
             self.settingsframe.grid_remove()
@@ -66,6 +71,8 @@ class Navigation:
             self.settingsframe.grid()
             self.settings_clicked = True
         
+    def change_city(self, location):
+        self.location_box.configure(text=location)
 
     def on_left_click(self):
         print("Left arrow clicked")
@@ -77,24 +84,37 @@ class Navigation:
 Sets up the search bar.
 """
 class Search:
-    def __init__(self, app):
+    def __init__(self, app, weather_app):
         self.app = app
+        self.weather_app = weather_app
         self.location = customtkinter.StringVar()
         self.create_search_entry()
 
     def create_search_entry(self):
         self.search_entry = customtkinter.CTkEntry(
-            self.app, width=120, height=40, corner_radius=2, border_width=2,
+            self.app, width=120, height=40, corner_radius=8, border_width=2,
             placeholder_text="Search for a Location", textvariable=self.location
         )
         self.search_entry.grid(row=1, column=2, columnspan=2, padx=10, pady=5, sticky="ew")
+        """
+        search_button = customtkinter.CTkButton(
+            self.app, text="Search", command=self.on_search_submit
+        )
+        search_button.grid(row=1, column=4, padx=2, pady=1)
+        """
+        self.search_entry.bind("<Return>", lambda event=None: self.on_search_submit())
 
     def get_search_text(self):
+        print("Location Searched: ", self.location.get())
         return self.location.get()
     
     def on_search_submit(self):
         city = self.get_search_text()
-        self.app.update_city(city)
+        self.weather_app.update_city(city)
+        self.location.set("")
+        original = self.search_entry.cget("fg_color")
+        self.search_entry.configure(fg_color="light green")
+        self.app.after(100, lambda: self.search_entry.configure(fg_color=original))
 
 """
 This is the main box for the current weather to be displayed. There is the temp in F or C and a 
@@ -107,12 +127,12 @@ class WeatherDisplay:
 
     def create_display_labels(self):
         # Temperature Label
-        self.temp_label = customtkinter.CTkLabel(self.app, text="Loading...", font=("Roboto", 40))
-        self.temp_label.grid(row=3, column=2, padx=0, pady=10, sticky="nsew")
+        self.temp_label = customtkinter.CTkLabel(self.app, text="Loading...", font=("Tahoma", 55), fg_color="light grey", height=175, corner_radius=15)
+        self.temp_label.grid(row=3, column=2, padx=5, pady=(15,25), sticky="nsew")
 
         # Weather Condition Label
-        self.weather_label = customtkinter.CTkLabel(self.app, text="Loading...", font=("Roboto", 30))
-        self.weather_label.grid(row=3, column=3, padx=0, pady=10, sticky="nsew")
+        self.weather_label = customtkinter.CTkLabel(self.app, text="Loading...", font=("Tahoma", 40), fg_color="light grey", height=175, corner_radius=15)
+        self.weather_label.grid(row=3, column=3, padx=5, pady=(15,25), sticky="nsew")
 
     def update_weather(self, temperature, condition, unit="F"):
         if unit == "F":
@@ -135,13 +155,13 @@ class Forecast:
     def create_forecast_buttons(self):
         self.hourly_button = customtkinter.CTkButton(
             self.app, text="Hourly", command=lambda: self.select_forecast("hourly"),
-            text_color="black", border_width=1
+            text_color="black", border_width=1, font=("Verdana", 18)
         )
         self.hourly_button.grid(row=5, column=2, padx=0, pady=10)
 
         self.daily_button = customtkinter.CTkButton(
             self.app, text="Daily", command=lambda: self.select_forecast("daily"),
-            text_color="black"
+            text_color="black", border_width=0, font=("Verdana", 18)
         )
         self.daily_button.grid(row=5, column=3, padx=0, pady=10)
 
@@ -149,10 +169,14 @@ class Forecast:
         if forecast_type == "hourly":
             self.hourly_button.configure(fg_color="#4da6ff")  # Highlighted color
             self.daily_button.configure(fg_color="#F0F0F0")   # Default color
+            self.hourly_button.configure(border_width=1)
+            self.daily_button.configure(border_width=0)
             self.data_loader.update_hourly(unit)
         elif forecast_type == "daily":
             self.daily_button.configure(fg_color="#4da6ff")   # Highlighted color
             self.hourly_button.configure(fg_color="#F0F0F0")  # Default color
+            self.daily_button.configure(border_width=1)
+            self.hourly_button.configure(border_width=0)
             self.data_loader.update_daily(unit)
 
 
@@ -161,13 +185,18 @@ Main frontend method to receive the API data from the backend and then put it in
 """
 class DataLoader:
     def __init__(self, weather_display, scrollable_area, city, unit="F"):
-        self.weather_fetcher = initialize(city)
+        self.city = city
+        self.weather_fetcher = initialize(self.city)
         self.weather_display = weather_display
         self.scrollable_area = scrollable_area
         self.hourly_forecast = None
         self.daily_forecast = None
         self.current = None
         self.unit = unit
+
+    def update_city(self, new_city):
+        self.city = new_city
+        self.weather_fetcher = initialize(self.city)
 
     def load_data(self):
         self.current = self.weather_fetcher.current
@@ -210,15 +239,25 @@ class ScrollableArea:
         self.scrollbar.pack(side="right", fill="y")
 
         self.forecast_canvas.configure(yscrollcommand=self.scrollbar.set)
-        self.forecast_canvas.bind('<Configure>', lambda e: self.forecast_canvas.configure(scrollregion=self.forecast_canvas.bbox("all")))
 
+        # Create the forecast_frame within the canvas
         self.forecast_frame = customtkinter.CTkFrame(self.forecast_canvas)
-        self.forecast_canvas.create_window((0, 0), window=self.forecast_frame, anchor="nw")
+        canvas_window = self.forecast_canvas.create_window((0, 0), window=self.forecast_frame, anchor="nw")
 
-        self.forecast_canvas.pack(side=tkinter.LEFT, fill=tkinter.BOTH, expand=True)
-        self.scrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
+        # Bind the <Configure> event of the forecast_frame to adjust the scrollregion of the canvas
+        self.forecast_frame.bind('<Configure>', lambda e: self.forecast_canvas.configure(scrollregion=self.forecast_canvas.bbox("all")))
 
-    
+
+    def adjust_canvas_scrollregion(self, event):
+        # Update the scrollregion of the canvas
+        self.forecast_canvas.configure(scrollregion=self.forecast_canvas.bbox("all"))
+
+    def adjust_frame_width(self, event):
+        # Update the width of the frame to match the canvas width
+        self.forecast_frame.configure(width=event.width)
+        # Update the scrollregion of the canvas
+        self.forecast_canvas.configure(scrollregion=self.forecast_canvas.bbox("all"))
+
     def update_area(self, forecast, type, unit="F"):
         #print("Forecast data structure:", type(forecast_data), forecast_data) # For testing
         # Clear existing forecast widgets
@@ -243,7 +282,7 @@ class ScrollableArea:
                 
                 # Create a label for each entry and add to the scrollable frame
                 label = customtkinter.CTkLabel(self.forecast_frame, text=forecast_text)
-                label.pack(padx=10, pady=5, anchor='w')
+                label.pack(padx=10, pady=5, anchor='w', fill='x')
 
         self.forecast_frame.update_idletasks()  # Make sure the frame is updated and scrollbar works.
         self.forecast_canvas.configure(scrollregion=self.forecast_canvas.bbox("all"))
@@ -265,7 +304,7 @@ class WeatherApp:
         self.title.grid(row=0, column=0, columnspan=6, padx=5, pady=5, sticky="ew")
         
         self.navigation = Navigation(self.app)
-        self.search = Search(self.app)
+        self.search = Search(self.app, self)
         self.weather_display = WeatherDisplay(self.app)
         self.scrollable_area = ScrollableArea(self.app)
         self.default_city = "Corvallis"
@@ -273,10 +312,11 @@ class WeatherApp:
         self.forecast = Forecast(self.app, self.data_loader, self.scrollable_area)
     
     def update_city(self, city):
-        self.data_loader.city = city
+        self.data_loader.update_city(city)
         self.data_loader.load_data()
         self.data_loader.update_current()
         self.data_loader.update_hourly()
+        self.navigation.change_city(city)
 
 
     def setup_window(self):
