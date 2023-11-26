@@ -227,22 +227,21 @@ class ScrollableArea:
         self.create_scrollable_area()
 
     def create_scrollable_area(self):
-        self.forecast_container = customtkinter.CTkFrame(self.app, corner_radius=10)
-        self.forecast_container.grid(row=6, column=1, columnspan=4, padx=10, pady=10, sticky="nsew")
+        self.forecast_container = customtkinter.CTkFrame(self.app, corner_radius=10, bg_color="grey")
+        self.forecast_container.grid(row=6, column=1, columnspan=4, padx=0, pady=10, sticky="nsew")
 
-        # Using CTKCanvas instead of the standard Canvas
         self.forecast_canvas = customtkinter.CTkCanvas(self.forecast_container)
         self.forecast_canvas.pack(side="left", fill="both", expand=True)
 
-        # Using CTKScrollbar instead of the standard Scrollbar
         self.scrollbar = customtkinter.CTkScrollbar(self.forecast_container, command=self.forecast_canvas.yview)
         self.scrollbar.pack(side="right", fill="y")
 
         self.forecast_canvas.configure(yscrollcommand=self.scrollbar.set)
+        self.forecast_canvas.bind('<Configure>', self.adjust_frame_width)
 
         # Create the forecast_frame within the canvas
-        self.forecast_frame = customtkinter.CTkFrame(self.forecast_canvas)
-        canvas_window = self.forecast_canvas.create_window((0, 0), window=self.forecast_frame, anchor="nw")
+        self.forecast_frame = customtkinter.CTkFrame(self.forecast_canvas, bg_color="grey")
+        self.canvas_window = self.forecast_canvas.create_window((0, 0), window=self.forecast_frame, anchor="nw")
 
         # Bind the <Configure> event of the forecast_frame to adjust the scrollregion of the canvas
         self.forecast_frame.bind('<Configure>', lambda e: self.forecast_canvas.configure(scrollregion=self.forecast_canvas.bbox("all")))
@@ -253,19 +252,19 @@ class ScrollableArea:
         self.forecast_canvas.configure(scrollregion=self.forecast_canvas.bbox("all"))
 
     def adjust_frame_width(self, event):
-        # Update the width of the frame to match the canvas width
-        self.forecast_frame.configure(width=event.width)
+        canvas_width = event.width
+        self.forecast_canvas.itemconfig(self.canvas_window, width=canvas_width)
         # Update the scrollregion of the canvas
         self.forecast_canvas.configure(scrollregion=self.forecast_canvas.bbox("all"))
 
     def update_area(self, forecast, type, unit="F"):
-        #print("Forecast data structure:", type(forecast_data), forecast_data) # For testing
-        # Clear existing forecast widgets
+    # Clear existing forecast widgets
         for widget in self.forecast_frame.winfo_children():
             widget.destroy()
 
         if type in ["hourly", "daily"]:
             # Iterate over the indices of the forecast lists
+            self.forecast_frame.grid_columnconfigure((0, 1, 2, 3), weight=2)
             for i in range(len(forecast['Time'])):
                 time = forecast['Time'][i]
                 temp = forecast['Temperature'][i]
@@ -274,18 +273,28 @@ class ScrollableArea:
                 condition = forecast['Conditions'][i]
                 wind_speed = forecast['Wind Speed'][i]
                 wind_dir = forecast['Wind Direction'][i]
-                humidity = forecast['Humidity'][i]
-                dew_point = forecast['Dew Point'][i]
+                #humidity = forecast['Humidity'][i]
+                #dew_point = forecast['Dew Point'][i]
 
-                # Format the forecast information
-                forecast_text = f"{time}: {temp}°{unit}, {condition}, Wind: {wind_speed} mph {wind_dir}, Humidity: {humidity}, Dew Point: {dew_point}° F"
-                
-                # Create a label for each entry and add to the scrollable frame
-                label = customtkinter.CTkLabel(self.forecast_frame, text=forecast_text)
-                label.pack(padx=10, pady=5, anchor='w', fill='x')
+                time_label = customtkinter.CTkLabel(self.forecast_frame, text=time)
+                temp_label = customtkinter.CTkLabel(self.forecast_frame, text=f"{temp}°{unit}")
+                condition_label = customtkinter.CTkLabel(self.forecast_frame, text=condition)
+                wind_label = customtkinter.CTkLabel(self.forecast_frame, text=f"Wind: {wind_speed} mph {wind_dir}")
+                #humidity_label = customtkinter.CTkLabel(self.forecast_frame, text=f"Humidity: {humidity}%")
+                #dew_point_label = customtkinter.CTkLabel(self.forecast_frame, text=f"Dew Point: {dew_point}° F")
 
-        self.forecast_frame.update_idletasks()  # Make sure the frame is updated and scrollbar works.
+                # Grid these labels
+                time_label.grid(row=i, column=0, sticky="ew")
+                temp_label.grid(row=i, column=1, sticky="ew")
+                condition_label.grid(row=i, column=2, sticky="ew")
+                wind_label.grid(row=i, column=3, sticky="ew")
+                #humidity_label.grid(row=i, column=4, sticky="ew")
+                #dew_point_label.grid(row=i, column=5, sticky="ew")
+
+        # Update the frame and canvas configurations
+        self.forecast_frame.update_idletasks()
         self.forecast_canvas.configure(scrollregion=self.forecast_canvas.bbox("all"))
+
 
 
 
