@@ -6,6 +6,7 @@ from PIL import Image, ImageTk
 
 #from ..backend.weatherApp_API_Testing import WeatherDataFetcher
 from ..backend.API import initialize
+from ..backend.API import current_Location
 
 
 
@@ -316,6 +317,8 @@ class WeatherApp:
         self.search = Search(self.app, self)
         self.weather_display = WeatherDisplay(self.app)
         self.scrollable_area = ScrollableArea(self.app)
+        current = current_Location()
+        self.current_city = current.location
         self.default_city = "Corvallis"
         self.data_loader = DataLoader(self.weather_display, self.scrollable_area, self.default_city)
         self.forecast = Forecast(self.app, self.data_loader, self.scrollable_area)
@@ -345,5 +348,8 @@ class WeatherApp:
 
 if __name__ == "__main__":
     weather_app = WeatherApp()
-    weather_app.update_city(weather_app.default_city)
+    if weather_app.current_city == None:
+        weather_app.update_city(weather_app.default_city)
+    else:
+        weather_app.update_city(weather_app.current_city)
     weather_app.run()

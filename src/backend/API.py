@@ -1,6 +1,9 @@
 import requests
 from datetime import datetime
-
+import geocoder
+from ip2geotools.databases.noncommercial import DbIpCity
+from geopy.distance import distance
+import socket
 
 class current_Weather:
     def __init__(self, location):
@@ -163,6 +166,16 @@ class hourly_Forcast:
     def get_weather_data(self):
         return self.data
 
+class current_Location:
+    def __init__(self):
+        g = geocoder.ip('me')
+        if g.ok:
+            self.res = DbIpCity.get(g.ip, api_key="free")
+            self.location = self.res.city
+        else:
+            self.res = None
+            self.location = None
+
 class initialize:
     def __init__(self, location):
         self.location = location
@@ -190,5 +203,6 @@ class initialize:
     def current(self):
         return self.current
     
+
         
         
