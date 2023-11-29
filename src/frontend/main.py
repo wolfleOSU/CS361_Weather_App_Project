@@ -153,50 +153,46 @@ class Forecast:
         self.data_loader = data_loader
         self.scrollable_area = scrollable_area
         self.create_forecast_buttons(data_loader.unit)
+        self.buttonColors = ["#4da6ff", "#F0F0F0"]
 
 
     def create_forecast_buttons(self, unit = "F"):
         self.hourly_button = customtkinter.CTkButton(
-            self.app, text="Hourly", command=lambda: self.select_forecast("hourly", unit),
+            self.app, text="Hourly", command=lambda: self.select_forecast(1, unit),
             text_color="black", border_width=1, font=("Verdana", 18)
         )
         self.hourly_button.grid(row=5, column=2, padx=0, pady=10)
 
         self.daily_button = customtkinter.CTkButton(
-            self.app, text="Daily", command=lambda: self.select_forecast("daily", unit),
+            self.app, text="Daily", command=lambda: self.select_forecast(0, unit),
             text_color="black", border_width=0, font=("Verdana", 18)
         )
         self.daily_button.grid(row=5, column=3, padx=0, pady=10)
-
-    def select_forecast(self, forecast_type, unit="F"):
-        if forecast_type == "hourly":
-            self.hourly_button.configure(fg_color="#4da6ff")  # Highlighted color
-            self.daily_button.configure(fg_color="#F0F0F0")   # Default color
-            self.hourly_button.configure(border_width=1)
-            self.daily_button.configure(border_width=0)
-            self.data_loader.update_hourly(unit)
-        elif forecast_type == "daily":
-            self.daily_button.configure(fg_color="#4da6ff")   # Highlighted color
-            self.hourly_button.configure(fg_color="#F0F0F0")  # Default color
-            self.daily_button.configure(border_width=1)
-            self.hourly_button.configure(border_width=0)
-            self.data_loader.update_daily(unit)
+    
+    #hourly = 1; daily = 0
+    def select_forecast(self, forecast_type, unit):
+        self.hourly_button.configure(fg_color=self.buttonColors[not forecast_type])
+        self.hourly_button.configure(border_width= not forecast_type)
+        self.daily_button.configure(fg_color=self.buttonColors[forecast_type])
+        self.daily_button.configure(border_width=forecast_type)
+        self.data_loader.forecast_type = forecast_type
+        self.data_loader.update_current()
 
 
 """
 Main frontend method to receive the API data from the backend and then put it into the correct area.
 """
 class DataLoader:
-    def __init__(self, weather_display, scrollable_area, city, time, unit):
+    def __init__(self, weather_display, scrollable_area, city, forecast_type, unit):
         self.city = city
         self.weather_fetcher = initialize(self.city)
         self.weather_display = weather_display
         self.scrollable_area = scrollable_area
-        self.hourly_forecast = None
-        self.daily_forecast = None
+        #[daily, hourly]
+        self.forecasts = [None, None]
         self.current = None
         self.unit = unit
-        self.time = time
+        self.forecast_type = forecast_type
 
     def update_city(self, new_city):
         self.city = new_city
@@ -206,24 +202,16 @@ class DataLoader:
         self.current = self.weather_fetcher.current
         print("Loading Current")
 
-        self.hourly_forecast = self.weather_fetcher.hourly
-        
-        self.daily_forecast = self.weather_fetcher.daily
+        self.forecasts[0] = self.weather_fetcher.daily
+        self.forecasts[1] = self.weather_fetcher.hourly
         
     def update_current(self):
         if self.current:
             self.weather_display.update_weather(self.current['Temperature'], self.current['Condition'], self.unit) 
-            if self.hourly_forecast and self.daily_forecast:
-                self.scrollable_area.update_area(self.hourly_forecast, self.time, self.unit)
+            if self.forecasts[0] and self.forecasts[1]:
+                self.scrollable_area.update_area(self.forecasts[self.forecast_type], self.forecast_type, self.unit)
             print("Updating current")
 
-    def update_hourly(self, unit="F"):
-        if self.hourly_forecast:
-            self.scrollable_area.update_area(self.hourly_forecast, "hourly", self.unit)
-
-    def update_daily(self, unit="F"):
-        if self.daily_forecast:
-            self.scrollable_area.update_area(self.daily_forecast, "daily", self.unit)
 """
 Sets up the main box that holds the forecast info. Updates to take the API data and display it.
 """
@@ -268,7 +256,8 @@ class ScrollableArea:
         for widget in self.forecast_frame.winfo_children():
             widget.destroy()
 
-        if type in ["hourly", "daily"]:
+        #if type in ["hourly", "daily"]:
+        if type in [0, 1]:
             # Iterate over the indices of the forecast lists
             self.forecast_frame.grid_columnconfigure((0, 1, 2, 3), weight=2)
             for i in range(len(forecast['Time'])):
@@ -325,7 +314,7 @@ class WeatherApp:
         current = current_Location()
         self.current_city = current.location
         self.default_city = "Corvallis"
-        self.data_loader = DataLoader(self.weather_display, self.scrollable_area, self.default_city, "hourly", "F")
+        self.data_loader = DataLoader(self.weather_display, self.scrollable_area, self.default_city, 1, "F")
         self.forecast = Forecast(self.app, self.data_loader, self.scrollable_area)
         self.navigation = Navigation(self.app, self.data_loader)
     
@@ -333,7 +322,6 @@ class WeatherApp:
         self.data_loader.update_city(city)
         self.data_loader.load_data()
         self.data_loader.update_current()
-        self.data_loader.update_hourly()
         self.navigation.change_city(city)
 
 
