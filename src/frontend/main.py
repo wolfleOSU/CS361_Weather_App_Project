@@ -29,10 +29,12 @@ Sets up 3 icons: the left and right buttons to select different saved locations 
 as the gear icon that opens the settings menu.
 """
 class Navigation:
-    def __init__(self, app):
+    def __init__(self, app, data_loader):
         self.app = app
+        self.data_loader = data_loader
         self.create_navigation_buttons()
         self.settings_clicked = False
+        
 
     def create_navigation_buttons(self):
         # Settings gear button
@@ -44,7 +46,7 @@ class Navigation:
         # Create and hide settings panel
         self.settingsframe = tkinter.Frame(self.app)
         self.settingsframe.grid(row=2, column=5, padx=10, pady=5)
-        self.settings_box = Settings(self.settingsframe)
+        self.settings_box = Settings(self.settingsframe, self.data_loader)
         self.settingsframe.grid_remove()
 
         # Left arrow button
@@ -150,18 +152,18 @@ class Forecast:
         self.app = app
         self.data_loader = data_loader
         self.scrollable_area = scrollable_area
-        self.create_forecast_buttons()
+        self.create_forecast_buttons(data_loader.unit)
 
 
-    def create_forecast_buttons(self):
+    def create_forecast_buttons(self, unit = "F"):
         self.hourly_button = customtkinter.CTkButton(
-            self.app, text="Hourly", command=lambda: self.select_forecast("hourly"),
+            self.app, text="Hourly", command=lambda: self.select_forecast("hourly", unit),
             text_color="black", border_width=1, font=("Verdana", 18)
         )
         self.hourly_button.grid(row=5, column=2, padx=0, pady=10)
 
         self.daily_button = customtkinter.CTkButton(
-            self.app, text="Daily", command=lambda: self.select_forecast("daily"),
+            self.app, text="Daily", command=lambda: self.select_forecast("daily", unit),
             text_color="black", border_width=0, font=("Verdana", 18)
         )
         self.daily_button.grid(row=5, column=3, padx=0, pady=10)
@@ -185,7 +187,7 @@ class Forecast:
 Main frontend method to receive the API data from the backend and then put it into the correct area.
 """
 class DataLoader:
-    def __init__(self, weather_display, scrollable_area, city, unit="F"):
+    def __init__(self, weather_display, scrollable_area, city, time, unit):
         self.city = city
         self.weather_fetcher = initialize(self.city)
         self.weather_display = weather_display
@@ -194,6 +196,7 @@ class DataLoader:
         self.daily_forecast = None
         self.current = None
         self.unit = unit
+        self.time = time
 
     def update_city(self, new_city):
         self.city = new_city
@@ -207,18 +210,20 @@ class DataLoader:
         
         self.daily_forecast = self.weather_fetcher.daily
         
-    def update_current(self, unit="F"):
+    def update_current(self):
         if self.current:
-            self.weather_display.update_weather(self.current['Temperature'], self.current['Condition'], unit)  
+            self.weather_display.update_weather(self.current['Temperature'], self.current['Condition'], self.unit) 
+            if self.hourly_forecast and self.daily_forecast:
+                self.scrollable_area.update_area(self.hourly_forecast, self.time, self.unit)
             print("Updating current")
 
     def update_hourly(self, unit="F"):
         if self.hourly_forecast:
-            self.scrollable_area.update_area(self.hourly_forecast, "hourly", unit)
+            self.scrollable_area.update_area(self.hourly_forecast, "hourly", self.unit)
 
     def update_daily(self, unit="F"):
         if self.daily_forecast:
-            self.scrollable_area.update_area(self.daily_forecast, "daily", unit)
+            self.scrollable_area.update_area(self.daily_forecast, "daily", self.unit)
 """
 Sets up the main box that holds the forecast info. Updates to take the API data and display it.
 """
@@ -259,7 +264,7 @@ class ScrollableArea:
         self.forecast_canvas.configure(scrollregion=self.forecast_canvas.bbox("all"))
 
     def update_area(self, forecast, type, unit="F"):
-    # Clear existing forecast widgets
+        # Clear existing forecast widgets
         for widget in self.forecast_frame.winfo_children():
             widget.destroy()
 
@@ -278,7 +283,7 @@ class ScrollableArea:
                 #dew_point = forecast['Dew Point'][i]
 
                 time_label = customtkinter.CTkLabel(self.forecast_frame, text=time)
-                temp_label = customtkinter.CTkLabel(self.forecast_frame, text=f"{temp}°{unit}")
+                temp_label = customtkinter.CTkLabel(self.forecast_frame, text=f"{round(temp, 2)}°{unit}")
                 condition_label = customtkinter.CTkLabel(self.forecast_frame, text=condition)
                 wind_label = customtkinter.CTkLabel(self.forecast_frame, text=f"Wind: {wind_speed} mph {wind_dir}")
                 #humidity_label = customtkinter.CTkLabel(self.forecast_frame, text=f"Humidity: {humidity}%")
@@ -313,15 +318,16 @@ class WeatherApp:
         self.title = customtkinter.CTkLabel(self.app, text="The Weather App")
         self.title.grid(row=0, column=0, columnspan=6, padx=5, pady=5, sticky="ew")
         
-        self.navigation = Navigation(self.app)
+        
         self.search = Search(self.app, self)
         self.weather_display = WeatherDisplay(self.app)
         self.scrollable_area = ScrollableArea(self.app)
         current = current_Location()
         self.current_city = current.location
         self.default_city = "Corvallis"
-        self.data_loader = DataLoader(self.weather_display, self.scrollable_area, self.default_city)
+        self.data_loader = DataLoader(self.weather_display, self.scrollable_area, self.default_city, "hourly", "F")
         self.forecast = Forecast(self.app, self.data_loader, self.scrollable_area)
+        self.navigation = Navigation(self.app, self.data_loader)
     
     def update_city(self, city):
         self.data_loader.update_city(city)

@@ -4,11 +4,13 @@ from customtkinter import CTkImage
 from PIL import Image, ImageTk
 
 class Settings:
-    def __init__(self, frame):
+    def __init__(self, frame, data_loader):
         self.c_clicked = False
         self.f_clicked = True
         self.w_clicked = False
         self.co_clicked = True
+
+        self.data_loader = data_loader
 
         self.celsius_btn = ctk.CTkButton(frame, text="Celsius", command=self.celsius_clicked, corner_radius=10)
         self.celsius_btn.grid(row=0,column=0, padx=5, pady=5)
@@ -36,13 +38,17 @@ class Settings:
 
     def celsius_clicked(self):
         self.c_clicked = not self.c_clicked
-        self.f_clicked = not self.c_clicked
+        self.f_clicked = not self.f_clicked
+        self.data_loader.unit = "C"
+        self.data_loader.update_current()
         self.toggle_button(self.celsius_btn, self.c_clicked)
         self.toggle_button(self.fahrenheit_btn, self.f_clicked)
 
     def fahrenheit_clicked(self):
         self.f_clicked = not self.f_clicked
-        self.c_clicked = not self.f_clicked
+        self.c_clicked = not self.c_clicked
+        self.data_loader.unit = "F"
+        self.data_loader.update_current()
         self.toggle_button(self.fahrenheit_btn, self.f_clicked)
         self.toggle_button(self.celsius_btn, self.c_clicked)
 
