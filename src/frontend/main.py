@@ -1,4 +1,3 @@
-import csv
 import tkinter
 import customtkinter
 from ..frontend.settings import Settings
@@ -93,37 +92,6 @@ class Search:
         self.weather_app = weather_app
         self.location = customtkinter.StringVar()
         self.create_search_entry()
-        self.file_path = "src/frontend/cities.csv"
-        self.city_data = self.load_city_data() # i cannot seem to pass from DataLoader to Search class. moved function here for now
-        self.cityPrint()
-
-        
-    def cityPrint(self):
-        print(self.city_data)
-    
-
-    def load_city_data(self):
-        try:
-            with open(self.file_path, newline='', encoding='utf-8') as csvfile:
-                reader = csv.DictReader(csvfile)
-                data_list = []
-                for row in reader:
-                    city_info = {
-                        'city': row['city'],
-                        'state_id': row['state_id'],
-                        'state_name': row['state_name'],
-                        'lat': float(row['lat']),
-                        'lng': float(row['lng'])
-                    }
-                    data_list.append(city_info)
-                print("Read data") # test to see if data is being read
-                self.data = data_list 
-                return data_list  # Return the loaded data
-        except FileNotFoundError:
-            print(f"Error: File '{self.file_path}' not found.")
-        except Exception as e:
-            print(f"Error loading data: {e}")
-
 
     def create_search_entry(self):
         self.search_entry = customtkinter.CTkEntry(
@@ -131,10 +99,30 @@ class Search:
             placeholder_text="Search for a Location", textvariable=self.location
         )
         self.search_entry.grid(row=1, column=2, columnspan=2, padx=10, pady=5, sticky="ew")
+        """
+        search_button = customtkinter.CTkButton(
+            self.app, text="Search", command=self.on_search_submit
+        )
+        search_button.grid(row=1, column=4, padx=2, pady=1)
+        """
+        self.search_entry.bind("<Return>", lambda event=None: self.on_search_submit())
 
     def get_search_text(self):
+        print("Location Searched: ", self.location.get())
         return self.location.get()
+    
+    def on_search_submit(self):
+        city = self.get_search_text()
+        self.weather_app.update_city(city)
+        self.location.set("")
+        original = self.search_entry.cget("fg_color")
+        self.search_entry.configure(fg_color="light green")
+        self.app.after(100, lambda: self.search_entry.configure(fg_color=original))
 
+"""
+This is the main box for the current weather to be displayed. There is the temp in F or C and a 
+statement about the current conditions.
+"""
 class WeatherDisplay:
     def __init__(self, app):
         self.app = app
@@ -195,14 +183,38 @@ class Forecast:
 Main frontend method to receive the API data from the backend and then put it into the correct area.
 """
 class DataLoader:
-    def __init__(self):
-        pass
+    def __init__(self, weather_display, scrollable_area, city, forecast_type, unit):
+        self.city = city
+        self.weather_fetcher = initialize(self.city)
+        self.weather_display = weather_display
+        self.scrollable_area = scrollable_area
+        #[daily, hourly]
+        self.forecasts = [None, None]
+        self.current = None
+        self.unit = unit
+        self.forecast_type = forecast_type
+
+    def update_city(self, new_city):
+        self.city = new_city
+        self.weather_fetcher = initialize(self.city)
 
     def load_data(self):
-        # Implement data loading logic
-        pass
+        self.current = self.weather_fetcher.current
+        print("Loading Current")
 
+        self.forecasts[0] = self.weather_fetcher.daily
+        self.forecasts[1] = self.weather_fetcher.hourly
+        
+    def update_current(self):
+        if self.current:
+            self.weather_display.update_weather(self.current['Temperature'], self.current['Condition'], self.unit) 
+            if self.forecasts[0] and self.forecasts[1]:
+                self.scrollable_area.update_area(self.forecasts[self.forecast_type], self.forecast_type, self.unit)
+            print("Updating current")
 
+"""
+Sets up the main box that holds the forecast info. Updates to take the API data and display it.
+"""
 class ScrollableArea:
     def __init__(self, app):
         self.app = app
@@ -295,11 +307,9 @@ class WeatherApp:
         self.title = customtkinter.CTkLabel(self.app, text="The Weather App")
         self.title.grid(row=0, column=0, columnspan=6, padx=5, pady=5, sticky="ew")
         
-        self.navigation = Navigation(self.app)
-        self.search = Search(self.app)
+        
+        self.search = Search(self.app, self)
         self.weather_display = WeatherDisplay(self.app)
-        self.forecast = Forecast(self.app)
-        self.data_loader = DataLoader()
         self.scrollable_area = ScrollableArea(self.app)
         current = current_Location()
         self.current_city = current.location
