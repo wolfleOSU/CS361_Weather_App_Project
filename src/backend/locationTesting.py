@@ -11,6 +11,8 @@ def printDetails(ip):
     print(f"IP Address: {res.ip_address}")
     print(f"Location: {res.city}, {res.region}, {res.country}")
     print(f"Coordinates: (Lat: {res.latitude}, Lng: {res.longitude})")
+    print(res.city)
+    print(res.region)
 
 g = geocoder.ip('me')
 
