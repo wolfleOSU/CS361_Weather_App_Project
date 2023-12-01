@@ -34,6 +34,7 @@ class Navigation:
         self.data_loader = data_loader
         self.create_navigation_buttons()
         self.settings_clicked = False
+        self.heart_clicked = False
         
 
     def create_navigation_buttons(self):
@@ -48,6 +49,12 @@ class Navigation:
         self.settingsframe.grid(row=2, column=5, padx=10, pady=5)
         self.settings_box = Settings(self.settingsframe, self.data_loader)
         self.settingsframe.grid_remove()
+
+        # Favorite Location Button
+        heart_image = Image.open("src/frontend/assets/heart.png").resize((30, 30), Image.BICUBIC)
+        heart_icon = customtkinter.CTkImage(heart_image)
+        self.settings_button = customtkinter.CTkButton(self.app, image=heart_icon, width=30, height=30, command=self.on_favorite_click, text="")
+        self.settings_button.grid(row=2, column=3, padx=10, pady=5, sticky="e")
 
         # Left arrow button
         left_image = Image.open("src/frontend/assets/left.png").resize((20, 20), Image.BICUBIC)
@@ -77,11 +84,25 @@ class Navigation:
     def change_city(self, location):
         self.location_box.configure(text=location)
 
+    def on_favorite_click(self):
+        # Unfavorite Location
+        if self.heart_clicked:
+            self.heart_clicked = False
+        # Favorite Location
+        else:
+            #Example Implementation:
+            #favorite_list.append(current_city)
+            self.heart_clicked = True
+
     def on_left_click(self):
-        print("Left arrow clicked")
+        print("left arrow clicked")
+        #Example Implementation (to get the idea):
+        #self.favorite_list.shiftLeft()
+        #update_city(favorite_list.fetchHead())
 
     def on_right_click(self):
-        print("Right arrow clicked")
+        print("right arrow clicked")
+        #self.favorite_list.shiftLeft()
 
 """
 Sets up the search bar.
@@ -290,7 +311,47 @@ class ScrollableArea:
         self.forecast_frame.update_idletasks()
         self.forecast_canvas.configure(scrollregion=self.forecast_canvas.bbox("all"))
 
+"""
+Class for circularly linked list of favorite city data
+"""
+class FavoriteList:
+    def __init__(self):
+        self.head = None
 
+    #Add favorited location
+    def append(self, city): 
+        if not self.head: #No head node yet, create first entry in list
+            self.head = FavoriteNode(city)
+            self.head.next = self.head
+            self.head.prev = self.head
+        else: #Adds new node previous to head node
+            newNode = FavoriteNode(city)
+            cur = self.head
+            while cur.next != self.head:
+                cur = cur.next
+            cur.next = newNode
+            newNode.next = self.head
+            newNode.prev = cur
+            self.head.prev = newNode
+
+    #For arrow keys, shift right or left in list and [pull data from head node] AFTER CALLING
+    def shiftRight(self):
+        self.head = self.head.next
+
+    def shiftLeft(self):
+        self.head = self.head.prev
+
+    def fetchHead(self):
+        return self.head.city
+
+"""
+Class for favorite location node in list
+"""
+class FavoriteNode:
+    def __init__(self, city):
+        self.city = city
+        self.next = None
+        self.prev = None
 
 
 """
