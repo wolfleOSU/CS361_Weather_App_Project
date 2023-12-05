@@ -1,5 +1,5 @@
 import tkinter
-import customtkinter
+import customtkinter as ctk
 from ..frontend.settings import Settings
 from customtkinter import CTkImage
 from PIL import Image, ImageTk
@@ -7,21 +7,6 @@ from PIL import Image, ImageTk
 #from ..backend.weatherApp_API_Testing import WeatherDataFetcher
 from ..backend.API import initialize
 from ..backend.API import current_Location
-
-
-
-"""
-Sets up some of the default settings
-"""
-class DefaultSettings:
-    def __init__(self, app) -> None:
-        self.app = app
-
-    def set_theme(self, theme):
-        customtkinter.set_default_color_theme(theme)
-    
-    def set_appearance_mode(self, mode):
-        customtkinter.set_appearance_mode(mode)
 
 
 """
@@ -40,8 +25,8 @@ class Navigation:
     def create_navigation_buttons(self):
         # Settings gear button
         gear_image = Image.open("src/frontend/assets/gear.png").resize((30, 30), Image.BICUBIC)
-        gear_icon = customtkinter.CTkImage(gear_image)
-        self.settings_button = customtkinter.CTkButton(self.app, image=gear_icon, width=30, height=30, command=self.on_settings_click, text="")
+        gear_icon = ctk.CTkImage(gear_image)
+        self.settings_button = ctk.CTkButton(self.app, image=gear_icon, width=30, height=30, command=self.on_settings_click, text="")
         self.settings_button.grid(row=1, column=5, padx=10, pady=5, sticky="e")
 
         # Create and hide settings panel
@@ -52,24 +37,24 @@ class Navigation:
 
         # Favorite Location Button
         heart_image = Image.open("src/frontend/assets/heart.png").resize((30, 30), Image.BICUBIC)
-        heart_icon = customtkinter.CTkImage(heart_image)
-        self.settings_button = customtkinter.CTkButton(self.app, image=heart_icon, width=30, height=30, command=self.on_favorite_click, text="")
+        heart_icon = ctk.CTkImage(heart_image)
+        self.settings_button = ctk.CTkButton(self.app, image=heart_icon, width=30, height=30, command=self.on_favorite_click, text="")
         self.settings_button.grid(row=2, column=3, padx=10, pady=5, sticky="e")
 
         # Left arrow button
         left_image = Image.open("src/frontend/assets/left.png").resize((20, 20), Image.BICUBIC)
-        left_icon = customtkinter.CTkImage(left_image)
-        self.left_button = customtkinter.CTkButton(self.app, image=left_icon, width=20, height=20, command=self.on_left_click, text="")
+        left_icon = ctk.CTkImage(left_image)
+        self.left_button = ctk.CTkButton(self.app, image=left_icon, width=20, height=20, command=self.on_left_click, text="")
         self.left_button.grid(row=2, column=1, padx=10, pady=10)
 
         # Right arrow button
         right_image = Image.open("src/frontend/assets/right.png").resize((20, 20), Image.BICUBIC)
-        right_icon = customtkinter.CTkImage(right_image)
-        self.right_button = customtkinter.CTkButton(self.app, image=right_icon, width=20, height=20, command=self.on_right_click, text="")
+        right_icon = ctk.CTkImage(right_image)
+        self.right_button = ctk.CTkButton(self.app, image=right_icon, width=20, height=20, command=self.on_right_click, text="")
         self.right_button.grid(row=2, column=4, padx=10, pady=10)
 
         # Location Display Box
-        self.location_box = customtkinter.CTkLabel(self.app, text="Corvallis", fg_color="#4da6ff", font=("Verdana", 35),
+        self.location_box = ctk.CTkLabel(self.app, text="Corvallis", fg_color="#4da6ff", font=("Verdana", 35),
                                                     corner_radius=7, text_color="black")
         self.location_box.grid(row=2, column=2, columnspan = 2, padx=5, pady=(50, 15))
 
@@ -111,17 +96,17 @@ class Search:
     def __init__(self, app, weather_app):
         self.app = app
         self.weather_app = weather_app
-        self.location = customtkinter.StringVar()
+        self.location = ctk.StringVar()
         self.create_search_entry()
 
     def create_search_entry(self):
-        self.search_entry = customtkinter.CTkEntry(
+        self.search_entry = ctk.CTkEntry(
             self.app, width=120, height=40, corner_radius=8, border_width=2,
             placeholder_text="Search for a Location", textvariable=self.location
         )
         self.search_entry.grid(row=1, column=2, columnspan=2, padx=10, pady=5, sticky="ew")
         """
-        search_button = customtkinter.CTkButton(
+        search_button = ctk.CTkButton(
             self.app, text="Search", command=self.on_search_submit
         )
         search_button.grid(row=1, column=4, padx=2, pady=1)
@@ -151,11 +136,11 @@ class WeatherDisplay:
 
     def create_display_labels(self):
         # Temperature Label
-        self.temp_label = customtkinter.CTkLabel(self.app, text="Loading...", font=("Tahoma", 55), fg_color="light grey", height=175, corner_radius=15)
+        self.temp_label = ctk.CTkLabel(self.app, text="Loading...", font=("Tahoma", 55), fg_color="light grey", height=175, corner_radius=15)
         self.temp_label.grid(row=3, column=2, padx=5, pady=(15,25), sticky="nsew")
 
         # Weather Condition Label
-        self.weather_label = customtkinter.CTkLabel(self.app, text="Loading...", font=("Tahoma", 40), fg_color="light grey", height=175, corner_radius=15)
+        self.weather_label = ctk.CTkLabel(self.app, text="Loading...", font=("Tahoma", 40), fg_color="light grey", height=175, corner_radius=15)
         self.weather_label.grid(row=3, column=3, padx=5, pady=(15,25), sticky="nsew")
 
     def update_weather(self, temperature, condition, unit="F"):
@@ -178,13 +163,13 @@ class Forecast:
 
 
     def create_forecast_buttons(self, unit = "F"):
-        self.hourly_button = customtkinter.CTkButton(
+        self.hourly_button = ctk.CTkButton(
             self.app, text="Hourly", command=lambda: self.select_forecast(1, unit),
             text_color="black", border_width=1, font=("Verdana", 18)
         )
         self.hourly_button.grid(row=5, column=2, padx=0, pady=10)
 
-        self.daily_button = customtkinter.CTkButton(
+        self.daily_button = ctk.CTkButton(
             self.app, text="Daily", command=lambda: self.select_forecast(0, unit),
             text_color="black", border_width=0, font=("Verdana", 18)
         )
@@ -242,20 +227,20 @@ class ScrollableArea:
         self.create_scrollable_area()
 
     def create_scrollable_area(self):
-        self.forecast_container = customtkinter.CTkFrame(self.app, corner_radius=10, bg_color="grey")
+        self.forecast_container = ctk.CTkFrame(self.app, corner_radius=10, bg_color="grey")
         self.forecast_container.grid(row=6, column=1, columnspan=4, padx=0, pady=10, sticky="nsew")
 
-        self.forecast_canvas = customtkinter.CTkCanvas(self.forecast_container)
+        self.forecast_canvas = ctk.CTkCanvas(self.forecast_container)
         self.forecast_canvas.pack(side="left", fill="both", expand=True)
 
-        self.scrollbar = customtkinter.CTkScrollbar(self.forecast_container, command=self.forecast_canvas.yview)
+        self.scrollbar = ctk.CTkScrollbar(self.forecast_container, command=self.forecast_canvas.yview)
         self.scrollbar.pack(side="right", fill="y")
 
         self.forecast_canvas.configure(yscrollcommand=self.scrollbar.set)
         self.forecast_canvas.bind('<Configure>', self.adjust_frame_width)
 
         # Create the forecast_frame within the canvas
-        self.forecast_frame = customtkinter.CTkFrame(self.forecast_canvas, bg_color="grey")
+        self.forecast_frame = ctk.CTkFrame(self.forecast_canvas, bg_color="grey")
         self.canvas_window = self.forecast_canvas.create_window((0, 0), window=self.forecast_frame, anchor="nw")
 
         # Bind the <Configure> event of the forecast_frame to adjust the scrollregion of the canvas
@@ -292,12 +277,12 @@ class ScrollableArea:
                 #humidity = forecast['Humidity'][i]
                 #dew_point = forecast['Dew Point'][i]
 
-                time_label = customtkinter.CTkLabel(self.forecast_frame, text=time)
-                temp_label = customtkinter.CTkLabel(self.forecast_frame, text=f"{round(temp, 2)}°{unit}")
-                condition_label = customtkinter.CTkLabel(self.forecast_frame, text=condition)
-                wind_label = customtkinter.CTkLabel(self.forecast_frame, text=f"Wind: {wind_speed} mph {wind_dir}")
-                #humidity_label = customtkinter.CTkLabel(self.forecast_frame, text=f"Humidity: {humidity}%")
-                #dew_point_label = customtkinter.CTkLabel(self.forecast_frame, text=f"Dew Point: {dew_point}° F")
+                time_label = ctk.CTkLabel(self.forecast_frame, text=time)
+                temp_label = ctk.CTkLabel(self.forecast_frame, text=f"{round(temp, 2)}°{unit}")
+                condition_label = ctk.CTkLabel(self.forecast_frame, text=condition)
+                wind_label = ctk.CTkLabel(self.forecast_frame, text=f"Wind: {wind_speed} mph {wind_dir}")
+                #humidity_label = ctk.CTkLabel(self.forecast_frame, text=f"Humidity: {humidity}%")
+                #dew_point_label = ctk.CTkLabel(self.forecast_frame, text=f"Dew Point: {dew_point}° F")
 
                 # Grid these labels
                 time_label.grid(row=i, column=0, sticky="ew")
@@ -360,12 +345,11 @@ The main class, holds the other classes and holds the actually functionality to 
 class WeatherApp:
     def __init__(self):
         # Initialize the main window
-        self.app = customtkinter.CTk()
-        self.settings = DefaultSettings(self.app)
+        self.app = ctk.CTk()
         self.setup_window()
 
         self.configure_layout()
-        self.title = customtkinter.CTkLabel(self.app, text="The Weather App")
+        self.title = ctk.CTkLabel(self.app, text="The Weather App")
         self.title.grid(row=0, column=0, columnspan=6, padx=5, pady=5, sticky="ew")
         
         
@@ -389,8 +373,8 @@ class WeatherApp:
     def setup_window(self):
         self.app.title("The Weather App")
         self.app.geometry("720x480")
-        self.settings.set_appearance_mode("System")  
-        self.settings.set_theme("blue")  
+        ctk.set_appearance_mode("System")
+        ctk.set_default_color_theme("blue")
 
     def configure_layout(self):
         for i in range(6):
