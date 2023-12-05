@@ -306,6 +306,8 @@ class ScrollableArea:
 Class for circularly linked list of favorite city data
 """
 class FavoriteList:
+    #   if you start out by making the head the current weather that'll simplify a lot of this code
+    
     def __init__(self):
         self.head = None
 
