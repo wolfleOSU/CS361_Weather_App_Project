@@ -1,7 +1,5 @@
 import tkinter
 import customtkinter as ctk
-from customtkinter import CTkImage
-from PIL import Image, ImageTk
 
 class Settings:
     def __init__(self, frame, data_loader):
