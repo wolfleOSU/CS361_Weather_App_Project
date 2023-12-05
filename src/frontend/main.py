@@ -55,29 +55,37 @@ class Navigation:
 
         # Location Display Box
         self.location_box = ctk.CTkLabel(self.app, text="Corvallis", fg_color="#4da6ff", font=("Verdana", 35),
-                                                    corner_radius=7, text_color="black")
+            corner_radius=7, text_color="black")
         self.location_box.grid(row=2, column=2, columnspan = 2, padx=5, pady=(50, 15))
 
     def on_settings_click(self):
         if self.settings_clicked:
             self.settingsframe.grid_remove()
-            self.settings_clicked = False
         else:
             self.settingsframe.grid()
-            self.settings_clicked = True
+        self.settings_clicked = not self.settings_clicked
         
     def change_city(self, location):
         self.location_box.configure(text=location)
 
     def on_favorite_click(self):
-        # Unfavorite Location
-        if self.heart_clicked:
-            self.heart_clicked = False
-        # Favorite Location
-        else:
-            #Example Implementation:
-            #favorite_list.append(current_city)
-            self.heart_clicked = True
+        # I'm leaving all this commented for the time being, but based one what it's doing,
+        #you're probably going to want to do it in the favoriteList. The code that did work here
+        #so far was simplified
+
+        #Is the heart icon going to change at all depending on weather it is pressed or not?
+        #if not most all of this isn't going to be useful
+
+        # # Unfavorite Location
+        # if self.heart_clicked:
+        #     self.heart_clicked = False
+        # # Favorite Location
+        # else:
+        #     #Example Implementation:
+        #     #favorite_list.append(current_city)
+        #     self.heart_clicked = True
+        self.heart_clicked = not self.heart_clicked
+        print("heart clicked")
 
     def on_left_click(self):
         print("left arrow clicked")
@@ -87,7 +95,7 @@ class Navigation:
 
     def on_right_click(self):
         print("right arrow clicked")
-        #self.favorite_list.shiftLeft()
+        #self.favorite_list.shiftRight()
 
 """
 Sets up the search bar.
@@ -121,9 +129,9 @@ class Search:
         city = self.get_search_text()
         self.weather_app.update_city(city)
         self.location.set("")
-        original = self.search_entry.cget("fg_color")
-        self.search_entry.configure(fg_color="light green")
-        self.app.after(100, lambda: self.search_entry.configure(fg_color=original))
+        original = self.search_entry.cget("border_color")
+        self.search_entry.configure(border_color="light green")
+        self.app.after(200, lambda: self.search_entry.configure(border_color=original))
 
 """
 This is the main box for the current weather to be displayed. There is the temp in F or C and a 
@@ -136,14 +144,14 @@ class WeatherDisplay:
 
     def create_display_labels(self):
         # Temperature Label
-        self.temp_label = ctk.CTkLabel(self.app, text="Loading...", font=("Tahoma", 55), fg_color="light grey", height=175, corner_radius=15)
+        self.temp_label = ctk.CTkLabel(self.app, text="Loading...", font=("Tahoma", 55), fg_color="grey", height=175, corner_radius=15)
         self.temp_label.grid(row=3, column=2, padx=5, pady=(15,25), sticky="nsew")
 
         # Weather Condition Label
-        self.weather_label = ctk.CTkLabel(self.app, text="Loading...", font=("Tahoma", 40), fg_color="light grey", height=175, corner_radius=15)
+        self.weather_label = ctk.CTkLabel(self.app, text="Loading...", font=("Tahoma", 40), fg_color="grey", height=175, corner_radius=15)
         self.weather_label.grid(row=3, column=3, padx=5, pady=(15,25), sticky="nsew")
 
-    def update_weather(self, temperature, condition, unit="F"):
+    def update_weather(self, temperature, condition, unit):
         if unit == "F":
             temperature = temperature * 1.8 + 32
         print(f"Updating weather: {temperature}° {unit}, {condition}")
@@ -159,13 +167,13 @@ class Forecast:
         self.data_loader = data_loader
         self.scrollable_area = scrollable_area
         self.create_forecast_buttons(data_loader.unit)
-        self.buttonColors = ["#4da6ff", "#F0F0F0"]
+        self.buttonColors = ["grey", "#4da6ff"]
 
 
-    def create_forecast_buttons(self, unit = "F"):
+    def create_forecast_buttons(self, unit):
         self.hourly_button = ctk.CTkButton(
             self.app, text="Hourly", command=lambda: self.select_forecast(1, unit),
-            text_color="black", border_width=1, font=("Verdana", 18)
+            text_color="black", border_width=1, font=("Verdana", 18), fg_color="grey"
         )
         self.hourly_button.grid(row=5, column=2, padx=0, pady=10)
 
@@ -257,40 +265,38 @@ class ScrollableArea:
         # Update the scrollregion of the canvas
         self.forecast_canvas.configure(scrollregion=self.forecast_canvas.bbox("all"))
 
-    def update_area(self, forecast, type, unit="F"):
+    def update_area(self, forecast, type, unit):
         # Clear existing forecast widgets
         for widget in self.forecast_frame.winfo_children():
             widget.destroy()
 
-        #if type in ["hourly", "daily"]:
-        if type in [0, 1]:
             # Iterate over the indices of the forecast lists
-            self.forecast_frame.grid_columnconfigure((0, 1, 2, 3), weight=2)
-            for i in range(len(forecast['Time'])):
-                time = forecast['Time'][i]
-                temp = forecast['Temperature'][i]
-                if unit == "C":
-                    temp = (temp - 32) * 5 / 9 
-                condition = forecast['Conditions'][i]
-                wind_speed = forecast['Wind Speed'][i]
-                wind_dir = forecast['Wind Direction'][i]
-                #humidity = forecast['Humidity'][i]
-                #dew_point = forecast['Dew Point'][i]
+        self.forecast_frame.grid_columnconfigure((0, 1, 2, 3), weight=2)
+        for i in range(len(forecast['Time'])):
+            time = forecast['Time'][i]
+            temp = forecast['Temperature'][i]
+            if unit == "C":
+                temp = (temp - 32) * 5 / 9 
+            condition = forecast['Conditions'][i]
+            wind_speed = forecast['Wind Speed'][i]
+            wind_dir = forecast['Wind Direction'][i]
+            #humidity = forecast['Humidity'][i]
+            #dew_point = forecast['Dew Point'][i]
 
-                time_label = ctk.CTkLabel(self.forecast_frame, text=time)
-                temp_label = ctk.CTkLabel(self.forecast_frame, text=f"{round(temp, 2)}°{unit}")
-                condition_label = ctk.CTkLabel(self.forecast_frame, text=condition)
-                wind_label = ctk.CTkLabel(self.forecast_frame, text=f"Wind: {wind_speed} mph {wind_dir}")
-                #humidity_label = ctk.CTkLabel(self.forecast_frame, text=f"Humidity: {humidity}%")
-                #dew_point_label = ctk.CTkLabel(self.forecast_frame, text=f"Dew Point: {dew_point}° F")
+            time_label = ctk.CTkLabel(self.forecast_frame, text=time)
+            temp_label = ctk.CTkLabel(self.forecast_frame, text=f"{round(temp, 2)}°{unit}")
+            condition_label = ctk.CTkLabel(self.forecast_frame, text=condition)
+            wind_label = ctk.CTkLabel(self.forecast_frame, text=f"Wind: {wind_speed} mph {wind_dir}")
+            #humidity_label = ctk.CTkLabel(self.forecast_frame, text=f"Humidity: {humidity}%")
+            #dew_point_label = ctk.CTkLabel(self.forecast_frame, text=f"Dew Point: {dew_point}° F")
 
-                # Grid these labels
-                time_label.grid(row=i, column=0, sticky="ew")
-                temp_label.grid(row=i, column=1, sticky="ew")
-                condition_label.grid(row=i, column=2, sticky="ew")
-                wind_label.grid(row=i, column=3, sticky="ew")
-                #humidity_label.grid(row=i, column=4, sticky="ew")
-                #dew_point_label.grid(row=i, column=5, sticky="ew")
+            # Grid these labels
+            time_label.grid(row=i, column=0, sticky="ew")
+            temp_label.grid(row=i, column=1, sticky="ew")
+            condition_label.grid(row=i, column=2, sticky="ew")
+            wind_label.grid(row=i, column=3, sticky="ew")
+            #humidity_label.grid(row=i, column=4, sticky="ew")
+            #dew_point_label.grid(row=i, column=5, sticky="ew")
 
         # Update the frame and canvas configurations
         self.forecast_frame.update_idletasks()
