@@ -306,18 +306,22 @@ class ScrollableArea:
         for i in range(len(forecast['Time'])):
             time = forecast['Time'][i]
             temp = forecast['Temperature'][i]
-            if unit == "C":
-                temp = (temp - 32) * 5 / 9 
-            condition = forecast['Conditions'][i]
             wind_speed = forecast['Wind Speed'][i]
             wind_dir = forecast['Wind Direction'][i]
+            if unit == "C":
+                temp = (temp - 32) * 5 / 9
+                wind_speed = (wind_speed * 1.609344)
+            condition = forecast['Conditions'][i]
             #humidity = forecast['Humidity'][i]
             #dew_point = forecast['Dew Point'][i]
 
             time_label = ctk.CTkLabel(self.forecast_frame, text=time)
             temp_label = ctk.CTkLabel(self.forecast_frame, text=f"{round(temp, 2)}°{unit}")
             condition_label = ctk.CTkLabel(self.forecast_frame, text=condition)
-            wind_label = ctk.CTkLabel(self.forecast_frame, text=f"Wind: {wind_speed} mph {wind_dir}")
+            if unit == "F":
+                wind_label = ctk.CTkLabel(self.forecast_frame, text=f"Wind: {wind_speed} mph {wind_dir}")
+            else:
+                wind_label = ctk.CTkLabel(self.forecast_frame, text=f"Wind: {wind_speed} kph {wind_dir}")
             #humidity_label = ctk.CTkLabel(self.forecast_frame, text=f"Humidity: {humidity}%")
             #dew_point_label = ctk.CTkLabel(self.forecast_frame, text=f"Dew Point: {dew_point}° F")
 
