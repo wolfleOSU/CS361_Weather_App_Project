@@ -38,19 +38,18 @@ class Settings:
         self.color_btn.configure(text = self.colors[not self.c_clicked])
         ctk.set_appearance_mode(self.colors[self.c_clicked].lower())
 
-
-
 """
 Sets up 3 icons: the left and right buttons to select different saved locations as well
 as the gear icon that opens the settings menu.
 """
 class Navigation:
-    def __init__(self, app, data_loader):
+    def __init__(self, app, data_loader, favorites_list):
         self.app = app
         self.data_loader = data_loader
         self.create_navigation_buttons()
         self.settings_clicked = False
         self.heart_clicked = False
+        self.favorites_list = favorites_list
         
 
     def create_navigation_buttons(self):
@@ -107,22 +106,13 @@ class Navigation:
         #Is the heart icon going to change at all depending on weather it is pressed or not?
         #if not most all of this isn't going to be useful
 
-        # # Unfavorite Location
-        # if self.heart_clicked:
-        #     self.heart_clicked = False
-        # # Favorite Location
-        # else:
-        #     #Example Implementation:
-        #     #favorite_list.append(current_city)
-        #     self.heart_clicked = True
+        #favorites_list.buttonClicked(self.heart_clicked, city)
         self.heart_clicked = not self.heart_clicked
         print("heart clicked")
 
     def on_left_click(self):
         print("left arrow clicked")
-        #Example Implementation (to get the idea):
         #self.favorite_list.shiftLeft()
-        #update_city(favorite_list.fetchHead())
 
     def on_right_click(self):
         print("right arrow clicked")
@@ -300,12 +290,14 @@ class ScrollableArea:
         # Clear existing forecast widgets
         for widget in self.forecast_frame.winfo_children():
             widget.destroy()
-
             # Iterate over the indices of the forecast lists
         self.forecast_frame.grid_columnconfigure((0, 1, 2, 3), weight=2)
         for i in range(len(forecast['Time'])):
             time = forecast['Time'][i]
             temp = forecast['Temperature'][i]
+            if unit == "C":
+                temp = (temp - 32) * 5 / 9 
+            condition = forecast['Conditions'][i]
             wind_speed = forecast['Wind Speed'][i]
             wind_dir = forecast['Wind Direction'][i]
             if unit == "C":
@@ -318,6 +310,7 @@ class ScrollableArea:
             time_label = ctk.CTkLabel(self.forecast_frame, text=time)
             temp_label = ctk.CTkLabel(self.forecast_frame, text=f"{round(temp, 2)}°{unit}")
             condition_label = ctk.CTkLabel(self.forecast_frame, text=condition)
+            wind_label = ctk.CTkLabel(self.forecast_frame, text=f"Wind: {wind_speed} mph {wind_dir}")
             if unit == "F":
                 wind_label = ctk.CTkLabel(self.forecast_frame, text=f"Wind: {wind_speed} mph {wind_dir}")
             else:
@@ -332,7 +325,6 @@ class ScrollableArea:
             wind_label.grid(row=i, column=3, sticky="ew")
             #humidity_label.grid(row=i, column=4, sticky="ew")
             #dew_point_label.grid(row=i, column=5, sticky="ew")
-
         # Update the frame and canvas configurations
         self.forecast_frame.update_idletasks()
         self.forecast_canvas.configure(scrollregion=self.forecast_canvas.bbox("all"))
@@ -342,9 +334,11 @@ Class for circularly linked list of favorite city data
 """
 class FavoriteList:
     #   if you start out by making the head the current weather that'll simplify a lot of this code
+    #   that was already the idea lol
     
-    def __init__(self):
+    def __init__(self, data_loader):
         self.head = None
+        self.data_loader = data_loader
 
     #Add favorited location
     def append(self, city): 
@@ -352,7 +346,7 @@ class FavoriteList:
             self.head = FavoriteNode(city)
             self.head.next = self.head
             self.head.prev = self.head
-        else: #Adds new node previous to head node
+        else: #Adds new node previous to head node and sets it to be the new head
             newNode = FavoriteNode(city)
             cur = self.head
             while cur.next != self.head:
@@ -361,16 +355,35 @@ class FavoriteList:
             newNode.next = self.head
             newNode.prev = cur
             self.head.prev = newNode
+            self.head = newNode
+
+    #Remove current favorite function
+    def removeHead(self):
+        if self.head == self.head.next:
+            self.head = None
+        else:
+            next = self.head.next
+            prev = self.head.prev
+            prev.next = next
+            next.prev = prev
+            self.head = next
 
     #For arrow keys, shift right or left in list and [pull data from head node] AFTER CALLING
     def shiftRight(self):
         self.head = self.head.next
+        self.data_loader.updat
 
     def shiftLeft(self):
         self.head = self.head.prev
 
     def fetchHead(self):
         return self.head.city
+    
+    def buttonClick(self, on, city):
+        if on:
+            self.append(city)
+        else:
+            self.removeHead()
 
 """
 Class for favorite location node in list
@@ -380,7 +393,6 @@ class FavoriteNode:
         self.city = city
         self.next = None
         self.prev = None
-
 
 """
 The main class, holds the other classes and holds the actually functionality to launch the window.
@@ -404,7 +416,8 @@ class WeatherApp:
         self.default_city = "Corvallis"
         self.data_loader = DataLoader(self.weather_display, self.scrollable_area, self.default_city, 1, "F")
         self.forecast = Forecast(self.app, self.data_loader, self.scrollable_area)
-        self.navigation = Navigation(self.app, self.data_loader)
+        self.favorites_list = FavoriteList(self.data_loader)
+        self.navigation = Navigation(self.app, self.data_loader, self.favorites_list)
     
     def update_city(self, city):
         self.data_loader.update_city(city)
