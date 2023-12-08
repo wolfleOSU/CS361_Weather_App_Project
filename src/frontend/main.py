@@ -371,7 +371,6 @@ class FavoriteList:
     #For arrow keys, shift right or left in list and [pull data from head node] AFTER CALLING
     def shiftRight(self):
         self.head = self.head.next
-        self.data_loader.updat
 
     def shiftLeft(self):
         self.head = self.head.prev
