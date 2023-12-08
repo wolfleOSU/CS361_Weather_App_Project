@@ -1,5 +1,6 @@
 import tkinter
 import re
+import json
 from CTkListbox import *
 from tkinter import END
 import customtkinter as ctk
@@ -53,7 +54,7 @@ class Navigation:
         self.create_navigation_buttons()
         self.settings_clicked = False
         self.heart_clicked = False
-        self.favorites_list = FavoriteList(self.data_loader)
+        self.favorites_list = FavoriteList(self.data_loader, "favorites.txt")
         
 
     def create_navigation_buttons(self):
@@ -109,15 +110,10 @@ class Navigation:
 
         #Is the heart icon going to change at all depending on weather it is pressed or not?
         #if not most all of this isn't going to be useful
-
         city = self.location_box.cget("text")
-        if not self.favorites_list.isNotEmpty():
-            self.heart_clicked = False
-        else: 
-            if not self.favorites_list.matchCurrent(city):
-                self.heart_clicked = False
         self.heart_clicked = not self.heart_clicked
         self.favorites_list.buttonClick(self.heart_clicked, city)
+        self.favorites_list.save_to_file("favorites.txt")
 
     def on_left_click(self):
         if self.favorites_list.isNotEmpty():
@@ -402,9 +398,11 @@ class FavoriteList:
     #   if you start out by making the head the current weather that'll simplify a lot of this code
     #   that was already the idea lol
     
-    def __init__(self, data_loader):
+    def __init__(self, data_loader, filename):
         self.head = None
         self.data_loader = data_loader
+        self.filename = filename
+        self.load_from_file("favorites.txt")
 
     def isNotEmpty(self):
         if not self.head:
@@ -467,6 +465,31 @@ class FavoriteList:
             self.append(city)
         else:
             self.removeHead()
+    
+    def save_to_file(self, filename):
+        favorites = [node.city for node in self.get_nodes()]
+        with open(filename, 'w') as file:
+            for city in favorites:
+                file.write(city + '\n')
+
+    def load_from_file(self, filename):
+        try:
+            with open(filename, 'r') as file:
+                favorites = file.read().splitlines()
+                for city in favorites:
+                    self.append(city)
+        except FileNotFoundError:
+            pass
+
+    def get_nodes(self):
+        nodes = []
+        current = self.head
+        while current:
+            nodes.append(current)
+            current = current.next
+            if current == self.head:
+                break
+        return nodes
 
 """
 Class for favorite location node in list
@@ -500,6 +523,8 @@ class WeatherApp:
         self.data_loader = DataLoader(self.weather_display, self.scrollable_area, self.default_city, 1, "F")
         self.forecast = Forecast(self.app, self.data_loader, self.scrollable_area)
         self.navigation = Navigation(self.app, self.data_loader)
+
+        self.favorite_list = FavoriteList(self.data_loader, "favorites.txt")
     
     def update_city(self, city):
         self.data_loader.update_city(city)
@@ -521,7 +546,13 @@ class WeatherApp:
         
 
     def run(self):
+        self.app.protocol("WM_DELETE_WINDOW", self.on_close)
         self.app.mainloop()
+
+    def on_close(self):
+        # Save favorites to file when the app is closed
+        self.favorite_list.save_to_file("favorites.txt")
+        self.app.destroy()
 
 if __name__ == "__main__":
     weather_app = WeatherApp()
