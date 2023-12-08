@@ -47,13 +47,13 @@ Sets up 3 icons: the left and right buttons to select different saved locations 
 as the gear icon that opens the settings menu.
 """
 class Navigation:
-    def __init__(self, app, data_loader, favorites_list):
+    def __init__(self, app, data_loader):
         self.app = app
         self.data_loader = data_loader
         self.create_navigation_buttons()
         self.settings_clicked = False
         self.heart_clicked = False
-        self.favorites_list = favorites_list
+        self.favorites_list = FavoriteList(self.data_loader)
         
 
     def create_navigation_buttons(self):
@@ -110,21 +110,26 @@ class Navigation:
         #Is the heart icon going to change at all depending on weather it is pressed or not?
         #if not most all of this isn't going to be useful
 
-        #favorites_list.buttonClicked(self.heart_clicked, city)
+        city = self.location_box.cget("text")
+        if not self.favorites_list.isNotEmpty():
+            self.heart_clicked = False
+        else: 
+            if not self.favorites_list.matchCurrent(city):
+                self.heart_clicked = False
         self.heart_clicked = not self.heart_clicked
-        print("heart clicked")
-
-
-        # text = self.location_box.cget("text")
-
+        self.favorites_list.buttonClick(self.heart_clicked, city)
 
     def on_left_click(self):
-        print("left arrow clicked")
-        #self.favorite_list.shiftLeft()
+        if self.favorites_list.isNotEmpty():
+            self.favorites_list.shiftLeft()
+            self.change_city(self.favorites_list.fetchHead())
+            self.heart_clicked = True
 
     def on_right_click(self):
-        print("right arrow clicked")
-        #self.favorite_list.shiftRight()
+        if self.favorites_list.isNotEmpty():
+            self.favorites_list.shiftRight()
+            self.change_city(self.favorites_list.fetchHead())
+            self.heart_clicked = True
 
 """
 Sets up the search bar.
@@ -179,6 +184,7 @@ class Search:
     def on_search_submit(self, event=None):
         city = self.get_search_text()
         match_found = False  # Flag to check if any match is found
+        self.weather_app.navigation.heart_clicked = False
 
         for element in self.cities:
             if re.fullmatch(city, element, re.IGNORECASE):
@@ -400,6 +406,18 @@ class FavoriteList:
         self.head = None
         self.data_loader = data_loader
 
+    def isNotEmpty(self):
+        if not self.head:
+            return False
+        else:
+            return True
+        
+    def matchCurrent(self, city):
+        if self.head.city == city:
+            return True
+        else:
+            return False
+
     #Add favorited location
     def append(self, city): 
         if not self.head: #No head node yet, create first entry in list
@@ -431,9 +449,15 @@ class FavoriteList:
     #For arrow keys, shift right or left in list and [pull data from head node] AFTER CALLING
     def shiftRight(self):
         self.head = self.head.next
+        self.data_loader.update_city(self.head.city)
+        self.data_loader.load_data()
+        self.data_loader.update_current()
 
     def shiftLeft(self):
         self.head = self.head.prev
+        self.data_loader.update_city(self.head.city)
+        self.data_loader.load_data()
+        self.data_loader.update_current()
 
     def fetchHead(self):
         return self.head.city
@@ -475,8 +499,7 @@ class WeatherApp:
         self.default_city = "Corvallis, Oregon"
         self.data_loader = DataLoader(self.weather_display, self.scrollable_area, self.default_city, 1, "F")
         self.forecast = Forecast(self.app, self.data_loader, self.scrollable_area)
-        self.favorites_list = FavoriteList(self.data_loader)
-        self.navigation = Navigation(self.app, self.data_loader, self.favorites_list)
+        self.navigation = Navigation(self.app, self.data_loader)
     
     def update_city(self, city):
         self.data_loader.update_city(city)
