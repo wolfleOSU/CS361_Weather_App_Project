@@ -295,8 +295,6 @@ class ScrollableArea:
         for i in range(len(forecast['Time'])):
             time = forecast['Time'][i]
             temp = forecast['Temperature'][i]
-            if unit == "C":
-                temp = (temp - 32) * 5 / 9 
             condition = forecast['Conditions'][i]
             wind_speed = forecast['Wind Speed'][i]
             wind_dir = forecast['Wind Direction'][i]
