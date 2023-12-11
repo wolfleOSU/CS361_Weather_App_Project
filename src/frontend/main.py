@@ -1,4 +1,7 @@
 import tkinter
+import re
+from CTkListbox import *
+from tkinter import END
 import customtkinter as ctk
 from customtkinter import CTkImage
 from PIL import Image, ImageTk
@@ -27,6 +30,7 @@ class Settings:
         self.color_btn.grid(row=1,column=0, padx=5, pady=5)
 
 
+
     def temp_clicked(self):
         self.t_clicked = not self.t_clicked
         self.data_loader.unit = self.temps[self.t_clicked][0]
@@ -43,13 +47,13 @@ Sets up 3 icons: the left and right buttons to select different saved locations 
 as the gear icon that opens the settings menu.
 """
 class Navigation:
-    def __init__(self, app, data_loader, favorites_list):
+    def __init__(self, app, data_loader):
         self.app = app
         self.data_loader = data_loader
         self.create_navigation_buttons()
         self.settings_clicked = False
         self.heart_clicked = False
-        self.favorites_list = favorites_list
+        self.favorites_list = FavoriteList(self.data_loader)
         
 
     def create_navigation_buttons(self):
@@ -106,54 +110,118 @@ class Navigation:
         #Is the heart icon going to change at all depending on weather it is pressed or not?
         #if not most all of this isn't going to be useful
 
-        #favorites_list.buttonClicked(self.heart_clicked, city)
+        city = self.location_box.cget("text")
+        if not self.favorites_list.isNotEmpty():
+            self.heart_clicked = False
+        else: 
+            if not self.favorites_list.matchCurrent(city):
+                self.heart_clicked = False
         self.heart_clicked = not self.heart_clicked
-        print("heart clicked")
+        self.favorites_list.buttonClick(self.heart_clicked, city)
 
     def on_left_click(self):
-        print("left arrow clicked")
-        #self.favorite_list.shiftLeft()
+        if self.favorites_list.isNotEmpty():
+            self.favorites_list.shiftLeft()
+            self.change_city(self.favorites_list.fetchHead())
+            self.heart_clicked = True
 
     def on_right_click(self):
-        print("right arrow clicked")
-        #self.favorite_list.shiftRight()
+        if self.favorites_list.isNotEmpty():
+            self.favorites_list.shiftRight()
+            self.change_city(self.favorites_list.fetchHead())
+            self.heart_clicked = True
 
 """
 Sets up the search bar.
 """
+
 class Search:
     def __init__(self, app, weather_app):
         self.app = app
         self.weather_app = weather_app
         self.location = ctk.StringVar()
+        self.font1 = ('Times', 24, 'bold')
+
         self.create_search_entry()
+        self.create_list_box()
+        self.cities = open("src/frontend/output_file.txt").read().split("\n")
+
+        self.search_entry.bind('<KeyRelease>', self.get_data)
+
+
+    def create_list_box(self):
+        self.l1 = CTkListbox(self.app, height=3, font=self.font1, multiple_selection=False, text_color='gray', command=self.on_click)
+        self.l1.grid(row=2, column=2, columnspan=2, padx=10, pady=5, sticky="ew")
+        self.l1.grid_remove()
+
+
+    def on_click(self, event=None):
+        original = self.search_entry.cget("border_color")
+        self.search_entry.configure(border_color="light green")
+        clickLocation = self.l1.get(self.l1.curselection())
+        print(f'Clicked Location: {clickLocation}')
+        self.l1.deactivate(self.l1.curselection())
+        self.l1.delete('all')
+        self.l1.grid_remove()
+        self.weather_app.navigation.location_box.grid()
+        self.weather_app.update_city(clickLocation)
+        self.location.set("")
+        self.app.after(200, lambda: self.search_entry.configure(border_color=original))
 
     def create_search_entry(self):
         self.search_entry = ctk.CTkEntry(
             self.app, width=120, height=40, corner_radius=8, border_width=2,
             placeholder_text="Search for a Location", textvariable=self.location
         )
+
         self.search_entry.grid(row=1, column=2, columnspan=2, padx=10, pady=5, sticky="ew")
-        """
-        search_button = ctk.CTkButton(
-            self.app, text="Search", command=self.on_search_submit
-        )
-        search_button.grid(row=1, column=4, padx=2, pady=1)
-        """
         self.search_entry.bind("<Return>", lambda event=None: self.on_search_submit())
 
     def get_search_text(self):
         print("Location Searched: ", self.location.get())
         return self.location.get()
-    
-    def on_search_submit(self):
-        city = self.get_search_text()
-        self.weather_app.update_city(city)
-        self.location.set("")
-        original = self.search_entry.cget("border_color")
-        self.search_entry.configure(border_color="light green")
-        self.app.after(200, lambda: self.search_entry.configure(border_color=original))
 
+    def on_search_submit(self, event=None):
+        city = self.get_search_text()
+        match_found = False  # Flag to check if any match is found
+        self.weather_app.navigation.heart_clicked = False
+
+        for element in self.cities:
+            if re.fullmatch(city, element, re.IGNORECASE):
+                original = self.search_entry.cget("border_color")
+                self.search_entry.configure(border_color="light green")
+                self.weather_app.update_city(city)
+                self.location.set("")
+                self.app.after(200, lambda: self.search_entry.configure(border_color=original))
+                self.weather_app.navigation.location_box.grid()
+                self.l1.grid_remove()
+                print('trying to search for location')
+                match_found = True
+                break  # Break out of the loop once a match is found
+        if not match_found:
+            print('no match in system')
+            original = self.search_entry.cget("border_color")
+            self.search_entry.configure(border_color="red")
+            self.app.after(500, lambda: self.search_entry.configure(border_color=original)) 
+
+
+
+    def get_data(self, *args):  # populate the Listbox with matching options
+        search_str = self.location.get()  # user entered string
+        self.l1.delete('all')  # Delete all elements of Listbox
+
+        if search_str and len(search_str) >= 3:
+            self.l1.grid()
+            for element in self.cities:
+                if re.match(search_str, element, re.IGNORECASE):
+                    self.l1.insert('END', element)  # add matching options to Listbox
+        elif search_str: 
+            self.l1.grid()
+            self.weather_app.navigation.location_box.grid_remove()
+        else:
+            self.weather_app.navigation.location_box.grid()
+            self.l1.delete("all")
+            self.l1.grid_remove()
 """
 This is the main box for the current weather to be displayed. There is the temp in F or C and a 
 statement about the current conditions.
@@ -295,8 +363,6 @@ class ScrollableArea:
         for i in range(len(forecast['Time'])):
             time = forecast['Time'][i]
             temp = forecast['Temperature'][i]
-            if unit == "C":
-                temp = (temp - 32) * 5 / 9 
             condition = forecast['Conditions'][i]
             wind_speed = forecast['Wind Speed'][i]
             wind_dir = forecast['Wind Direction'][i]
@@ -340,6 +406,18 @@ class FavoriteList:
         self.head = None
         self.data_loader = data_loader
 
+    def isNotEmpty(self):
+        if not self.head:
+            return False
+        else:
+            return True
+        
+    def matchCurrent(self, city):
+        if self.head.city == city:
+            return True
+        else:
+            return False
+
     #Add favorited location
     def append(self, city): 
         if not self.head: #No head node yet, create first entry in list
@@ -371,10 +449,15 @@ class FavoriteList:
     #For arrow keys, shift right or left in list and [pull data from head node] AFTER CALLING
     def shiftRight(self):
         self.head = self.head.next
-        self.data_loader.updat
+        self.data_loader.update_city(self.head.city)
+        self.data_loader.load_data()
+        self.data_loader.update_current()
 
     def shiftLeft(self):
         self.head = self.head.prev
+        self.data_loader.update_city(self.head.city)
+        self.data_loader.load_data()
+        self.data_loader.update_current()
 
     def fetchHead(self):
         return self.head.city
@@ -413,11 +496,10 @@ class WeatherApp:
         self.scrollable_area = ScrollableArea(self.app)
         current = current_Location()
         self.current_city = current.location
-        self.default_city = "Corvallis"
+        self.default_city = "Corvallis, Oregon"
         self.data_loader = DataLoader(self.weather_display, self.scrollable_area, self.default_city, 1, "F")
         self.forecast = Forecast(self.app, self.data_loader, self.scrollable_area)
-        self.favorites_list = FavoriteList(self.data_loader)
-        self.navigation = Navigation(self.app, self.data_loader, self.favorites_list)
+        self.navigation = Navigation(self.app, self.data_loader)
     
     def update_city(self, city):
         self.data_loader.update_city(city)
