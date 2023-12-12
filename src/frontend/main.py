@@ -71,9 +71,11 @@ class Navigation:
 
         # Favorite Location Button
         heart_image = Image.open("src/frontend/assets/heart.png").resize((30, 30), Image.BICUBIC)
-        heart_icon = ctk.CTkImage(heart_image)
-        self.settings_button = ctk.CTkButton(self.app, image=heart_icon, width=30, height=30, command=self.on_favorite_click, text="")
-        self.settings_button.grid(row=2, column=3, padx=10, pady=5, sticky="e")
+        heart_clicked_image = Image.open("src/frontend/assets/heart_clicked.png").resize((30, 30), Image.BICUBIC)
+        self.heart_icon = ctk.CTkImage(heart_image)
+        self.heart_clicked_icon = ctk.CTkImage(heart_clicked_image)
+        self.favorite_button = ctk.CTkButton(self.app, image=self.heart_icon, width=30, height=30, command=self.on_favorite_click, text="")
+        self.favorite_button.grid(row=2, column=3, padx=10, pady=5, sticky="e")
 
         # Left arrow button
         left_image = Image.open("src/frontend/assets/left.png").resize((20, 20), Image.BICUBIC)
@@ -101,6 +103,10 @@ class Navigation:
         
     def change_city(self, location):
         self.location_box.configure(text=location)
+        if self.favorites_list.isNotEmpty():
+            if not self.favorites_list.matchCurrent(location):
+                self.favorite_button.configure(image = self.heart_icon)
+
 
     def on_favorite_click(self):
         # I'm leaving all this commented for the time being, but based one what it's doing,
@@ -112,24 +118,34 @@ class Navigation:
 
         city = self.location_box.cget("text")
         if not self.favorites_list.isNotEmpty():
+            self.favorite_button.configure(image = self.heart_clicked_icon)
             self.heart_clicked = False
         else: 
             if not self.favorites_list.matchCurrent(city):
+                self.favorite_button.configure(image = self.heart_clicked_icon)
                 self.heart_clicked = False
+            else:
+                self.favorite_button.configure(image = self.heart_icon)
         self.heart_clicked = not self.heart_clicked
         self.favorites_list.buttonClick(self.heart_clicked, city)
 
     def on_left_click(self):
         if self.favorites_list.isNotEmpty():
+            self.favorite_button.configure(image = self.heart_clicked_icon)
             self.favorites_list.shiftLeft()
             self.change_city(self.favorites_list.fetchHead())
             self.heart_clicked = True
 
     def on_right_click(self):
         if self.favorites_list.isNotEmpty():
+            self.favorite_button.configure(image = self.heart_clicked_icon)
             self.favorites_list.shiftRight()
             self.change_city(self.favorites_list.fetchHead())
             self.heart_clicked = True
+
+    def change_heart_icon(self):
+        print("fuck you")
+        self.favorite_button.configure(image = self.heart_icon)
 
 """
 Sets up the search bar.
@@ -185,6 +201,7 @@ class Search:
         city = self.get_search_text()
         match_found = False  # Flag to check if any match is found
         self.weather_app.navigation.heart_clicked = False
+        #self.weather_app.navigation.favorite_button.configure(Image = self.weather_app.navigation.heart_icon)
 
         for element in self.cities:
             if re.fullmatch(city, element, re.IGNORECASE):
