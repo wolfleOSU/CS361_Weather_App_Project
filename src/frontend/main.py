@@ -292,9 +292,9 @@ class Forecast:
     #hourly = 1; daily = 0
     def select_forecast(self, forecast_type, unit):
         self.hourly_button.configure(fg_color=self.buttonColors[not forecast_type])
-        self.hourly_button.configure(border_width= not forecast_type)
+        self.hourly_button.configure(border_width=forecast_type)
         self.daily_button.configure(fg_color=self.buttonColors[forecast_type])
-        self.daily_button.configure(border_width=forecast_type)
+        self.daily_button.configure(border_width=not forecast_type)
         self.data_loader.forecast_type = forecast_type
         self.data_loader.update_current()
 
